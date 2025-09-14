@@ -15,4 +15,7 @@ router.get("/analytics", marketingController.getMarketingAnalytics);
 // GET marketing insights
 router.get("/insights", marketingController.getMarketingInsights);
 
+// GET export data
+router.get("/export", marketingController.exportData);
+
 module.exports = router;

@@ -1036,9 +1036,34 @@
           updateDataPreview();
         }
 
-        function exportData() {
-          // Implement data export functionality
-          showSuccess("Export functionality coming soon!");
+        async function exportData() {
+          try {
+            showLoading();
+            
+            const response = await fetch("/api/marketing/export");
+            
+            if (response.ok) {
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.style.display = 'none';
+              a.href = url;
+              a.download = 'marketing_data_export.csv';
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              
+              showSuccess("Data exported successfully!");
+            } else {
+              throw new Error("Failed to export data");
+            }
+          } catch (error) {
+            console.error("Export error:", error);
+            showError("Failed to export data. Please try again.");
+          } finally {
+            hideLoading();
+          }
         }
 
         function showAIInsights() {

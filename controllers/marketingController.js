@@ -457,8 +457,111 @@ function generateMarketingInsights(analytics) {
   return insights;
 }
 
+// Export marketing data as CSV
+const exportData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get all marketing campaigns and business metrics for the user
+    const campaigns = await MarketingCampaign.find({ user: userId }).sort({ date: -1 });
+    const metrics = await BusinessMetrics.find({ user: userId }).sort({ date: -1 });
+
+    // Combine data for export
+    const exportData = [];
+
+    // Add business metrics
+    metrics.forEach(metric => {
+      exportData.push({
+        type: 'Business Metric',
+        date: metric.date.toISOString().split('T')[0],
+        totalOrders: metric.totalOrders,
+        newOrders: metric.newOrders,
+        totalRevenue: metric.totalRevenue,
+        newRevenue: metric.newRevenue,
+        totalCustomers: metric.totalCustomers,
+        newCustomers: metric.newCustomers,
+        avgOrderValue: metric.avgOrderValue,
+        conversionRate: metric.conversionRate,
+        campaign: '',
+        channel: '',
+        impressions: '',
+        clicks: '',
+        ctr: '',
+        cpc: '',
+        spend: ''
+      });
+    });
+
+    // Add marketing campaigns
+    campaigns.forEach(campaign => {
+      exportData.push({
+        type: 'Marketing Campaign',
+        date: campaign.date.toISOString().split('T')[0],
+        totalOrders: '',
+        newOrders: '',
+        totalRevenue: '',
+        newRevenue: '',
+        totalCustomers: '',
+        newCustomers: '',
+        avgOrderValue: '',
+        conversionRate: '',
+        campaign: campaign.campaign,
+        channel: campaign.channel,
+        impressions: campaign.impressions,
+        clicks: campaign.clicks,
+        ctr: campaign.ctr,
+        cpc: campaign.cpc,
+        spend: campaign.spend
+      });
+    });
+
+    // Create CSV content
+    const headers = [
+      'Type', 'Date', 'Total Orders', 'New Orders', 'Total Revenue', 'New Revenue',
+      'Total Customers', 'New Customers', 'Avg Order Value', 'Conversion Rate',
+      'Campaign', 'Channel', 'Impressions', 'Clicks', 'CTR', 'CPC', 'Spend'
+    ];
+
+    let csvContent = headers.join(',') + '\n';
+
+    exportData.forEach(row => {
+      const csvRow = [
+        row.type,
+        row.date,
+        row.totalOrders,
+        row.newOrders,
+        row.totalRevenue,
+        row.newRevenue,
+        row.totalCustomers,
+        row.newCustomers,
+        row.avgOrderValue,
+        row.conversionRate,
+        row.campaign,
+        row.channel,
+        row.impressions,
+        row.clicks,
+        row.ctr,
+        row.cpc,
+        row.spend
+      ].map(value => `"${value}"`).join(',');
+      
+      csvContent += csvRow + '\n';
+    });
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="marketing_data_export.csv"');
+
+    res.send(csvContent);
+  } catch (err) {
+    console.error("Error exporting marketing data:", err);
+    res.status(500).json({ error: "Failed to export marketing data." });
+  }
+};
+
 module.exports = {
   importMarketingData,
   getMarketingAnalytics,
   getMarketingInsights,
+  exportData,
 };
