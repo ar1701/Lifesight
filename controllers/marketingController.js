@@ -463,17 +463,21 @@ const exportData = async (req, res) => {
     const userId = req.user.id;
 
     // Get all marketing campaigns and business metrics for the user
-    const campaigns = await MarketingCampaign.find({ user: userId }).sort({ date: -1 });
-    const metrics = await BusinessMetrics.find({ user: userId }).sort({ date: -1 });
+    const campaigns = await MarketingCampaign.find({ user: userId }).sort({
+      date: -1,
+    });
+    const metrics = await BusinessMetrics.find({ user: userId }).sort({
+      date: -1,
+    });
 
     // Combine data for export
     const exportData = [];
 
     // Add business metrics
-    metrics.forEach(metric => {
+    metrics.forEach((metric) => {
       exportData.push({
-        type: 'Business Metric',
-        date: metric.date.toISOString().split('T')[0],
+        type: "Business Metric",
+        date: metric.date.toISOString().split("T")[0],
         totalOrders: metric.totalOrders,
         newOrders: metric.newOrders,
         totalRevenue: metric.totalRevenue,
@@ -482,49 +486,63 @@ const exportData = async (req, res) => {
         newCustomers: metric.newCustomers,
         avgOrderValue: metric.avgOrderValue,
         conversionRate: metric.conversionRate,
-        campaign: '',
-        channel: '',
-        impressions: '',
-        clicks: '',
-        ctr: '',
-        cpc: '',
-        spend: ''
+        campaign: "",
+        channel: "",
+        impressions: "",
+        clicks: "",
+        ctr: "",
+        cpc: "",
+        spend: "",
       });
     });
 
     // Add marketing campaigns
-    campaigns.forEach(campaign => {
+    campaigns.forEach((campaign) => {
       exportData.push({
-        type: 'Marketing Campaign',
-        date: campaign.date.toISOString().split('T')[0],
-        totalOrders: '',
-        newOrders: '',
-        totalRevenue: '',
-        newRevenue: '',
-        totalCustomers: '',
-        newCustomers: '',
-        avgOrderValue: '',
-        conversionRate: '',
+        type: "Marketing Campaign",
+        date: campaign.date.toISOString().split("T")[0],
+        totalOrders: "",
+        newOrders: "",
+        totalRevenue: "",
+        newRevenue: "",
+        totalCustomers: "",
+        newCustomers: "",
+        avgOrderValue: "",
+        conversionRate: "",
         campaign: campaign.campaign,
         channel: campaign.channel,
         impressions: campaign.impressions,
         clicks: campaign.clicks,
         ctr: campaign.ctr,
         cpc: campaign.cpc,
-        spend: campaign.spend
+        spend: campaign.spend,
       });
     });
 
     // Create CSV content
     const headers = [
-      'Type', 'Date', 'Total Orders', 'New Orders', 'Total Revenue', 'New Revenue',
-      'Total Customers', 'New Customers', 'Avg Order Value', 'Conversion Rate',
-      'Campaign', 'Channel', 'Impressions', 'Clicks', 'CTR', 'CPC', 'Spend'
+      "Type",
+      "Date",
+      "Total Orders",
+      "New Orders",
+      "Total Revenue",
+      "New Revenue",
+      "Total Customers",
+      "New Customers",
+      "Avg Order Value",
+      "Conversion Rate",
+      "Campaign",
+      "Channel",
+      "Impressions",
+      "Clicks",
+      "CTR",
+      "CPC",
+      "Spend",
     ];
 
-    let csvContent = headers.join(',') + '\n';
+    let csvContent = headers.join(",") + "\n";
 
-    exportData.forEach(row => {
+    exportData.forEach((row) => {
       const csvRow = [
         row.type,
         row.date,
@@ -542,15 +560,20 @@ const exportData = async (req, res) => {
         row.clicks,
         row.ctr,
         row.cpc,
-        row.spend
-      ].map(value => `"${value}"`).join(',');
-      
-      csvContent += csvRow + '\n';
+        row.spend,
+      ]
+        .map((value) => `"${value}"`)
+        .join(",");
+
+      csvContent += csvRow + "\n";
     });
 
     // Set headers for file download
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="marketing_data_export.csv"');
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="marketing_data_export.csv"'
+    );
 
     res.send(csvContent);
   } catch (err) {
@@ -559,9 +582,213 @@ const exportData = async (req, res) => {
   }
 };
 
+// Upload custom marketing data
+const uploadCustomData = async (req, res) => {
+  const multer = require("multer");
+  const XLSX = require("xlsx");
+
+  // Configure multer for file upload
+  const storage = multer.memoryStorage();
+  const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [".csv", ".xlsx", ".xls"];
+      const fileExt = path.extname(file.originalname).toLowerCase();
+      if (allowedTypes.includes(fileExt)) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only CSV and Excel files are allowed"), false);
+      }
+    },
+  }).fields([
+    { name: "campaignFiles", maxCount: 10 },
+    { name: "businessFile", maxCount: 1 },
+  ]);
+
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    try {
+      const userId = req.user.id;
+      const campaignFiles = req.files["campaignFiles"] || [];
+      const businessFiles = req.files["businessFile"] || [];
+
+      if (campaignFiles.length === 0 && businessFiles.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      let processedCampaigns = 0;
+      let processedBusinessMetrics = 0;
+
+      // Process campaign files
+      for (const file of campaignFiles) {
+        const data = await parseFileData(file);
+        await processCampaignData(data, userId);
+        processedCampaigns += data.length;
+      }
+
+      // Process business files
+      for (const file of businessFiles) {
+        const data = await parseFileData(file);
+        await processBusinessData(data, userId);
+        processedBusinessMetrics += data.length;
+      }
+
+      res.json({
+        message: "Custom data uploaded successfully",
+        processed: {
+          campaigns: processedCampaigns,
+          businessMetrics: processedBusinessMetrics,
+        },
+      });
+    } catch (error) {
+      console.error("Error uploading custom data:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to upload custom data: " + error.message });
+    }
+  });
+};
+
+// Helper function to parse file data
+async function parseFileData(file) {
+  const fileExt = path.extname(file.originalname).toLowerCase();
+
+  if (fileExt === ".csv") {
+    return parseCSVFromBuffer(file.buffer);
+  } else if (fileExt === ".xlsx" || fileExt === ".xls") {
+    return parseExcelFromBuffer(file.buffer);
+  } else {
+    throw new Error("Unsupported file format");
+  }
+}
+
+// Parse CSV from buffer
+function parseCSVFromBuffer(buffer) {
+  return new Promise((resolve, reject) => {
+    const results = [];
+    const csvString = buffer.toString();
+    const lines = csvString.split("\n");
+
+    if (lines.length < 2) {
+      reject(
+        new Error("CSV file must have at least a header and one data row")
+      );
+      return;
+    }
+
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line) {
+        const values = line.split(",").map((v) => v.trim().replace(/"/g, ""));
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || "";
+        });
+        results.push(row);
+      }
+    }
+
+    resolve(results);
+  });
+}
+
+// Parse Excel from buffer
+function parseExcelFromBuffer(buffer) {
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  return XLSX.utils.sheet_to_json(worksheet);
+}
+
+// Process campaign data
+async function processCampaignData(data, userId) {
+  const requiredFields = [
+    "campaign_name",
+    "platform",
+    "date",
+    "spend",
+    "impressions",
+    "clicks",
+    "attributed_revenue",
+  ];
+
+  for (const row of data) {
+    // Validate required fields
+    const missingFields = requiredFields.filter((field) => !row[field]);
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Missing required fields in campaign data: ${missingFields.join(", ")}`
+      );
+    }
+
+    // Validate platform
+    const validPlatforms = ["Facebook", "Google", "TikTok"];
+    if (!validPlatforms.includes(row.platform)) {
+      throw new Error(
+        `Invalid platform: ${
+          row.platform
+        }. Must be one of: ${validPlatforms.join(", ")}`
+      );
+    }
+
+    // Create campaign record
+    const campaign = new MarketingCampaign({
+      user: userId,
+      campaign_name: row.campaign_name,
+      platform: row.platform,
+      date: new Date(row.date),
+      spend: parseFloat(row.spend) || 0,
+      impressions: parseInt(row.impressions) || 0,
+      clicks: parseInt(row.clicks) || 0,
+      attributed_revenue: parseFloat(row.attributed_revenue) || 0,
+    });
+
+    await campaign.save();
+  }
+}
+
+// Process business data
+async function processBusinessData(data, userId) {
+  const requiredFields = [
+    "date",
+    "total_revenue",
+    "total_orders",
+    "new_customers",
+    "cogs",
+  ];
+
+  for (const row of data) {
+    // Validate required fields
+    const missingFields = requiredFields.filter((field) => !row[field]);
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Missing required fields in business data: ${missingFields.join(", ")}`
+      );
+    }
+
+    // Create business metrics record
+    const businessMetric = new BusinessMetrics({
+      user: userId,
+      date: new Date(row.date),
+      total_revenue: parseFloat(row.total_revenue) || 0,
+      total_orders: parseInt(row.total_orders) || 0,
+      new_customers: parseInt(row.new_customers) || 0,
+      cogs: parseFloat(row.cogs) || 0,
+    });
+
+    await businessMetric.save();
+  }
+}
+
 module.exports = {
   importMarketingData,
   getMarketingAnalytics,
   getMarketingInsights,
   exportData,
+  uploadCustomData,
 };

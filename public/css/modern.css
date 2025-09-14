@@ -2423,3 +2423,91 @@ p {
   padding: var(--space-2) var(--space-4);
   font-weight: 500;
 }
+
+/* Marketing Tooltips */
+.metric-tooltip {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted var(--primary);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.metric-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900);
+  color: var(--white);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+  max-width: 300px;
+  white-space: normal;
+}
+
+.metric-tooltip:hover::before {
+  content: "";
+  position: absolute;
+  bottom: 95%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--gray-900);
+  z-index: 1001;
+}
+
+/* Insight Controls */
+.insight-controls .btn-group .btn {
+  transition: all 0.3s ease;
+}
+
+.insight-controls .btn-group .btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
+}
+
+.insight-controls .btn-group .btn:hover:not(.active) {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Metric Definition Cards */
+.metric-definition {
+  padding: var(--space-3);
+  border-left: 3px solid var(--primary);
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+.metric-definition strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* File Upload Areas */
+.required-columns {
+  background: var(--gray-50);
+  padding: var(--space-3);
+  border-radius: 6px;
+  border-left: 3px solid var(--warning);
+}
+
+.required-columns ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+/* Template Preview */
+pre code {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}

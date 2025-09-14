@@ -18,4 +18,7 @@ router.get("/insights", marketingController.getMarketingInsights);
 // GET export data
 router.get("/export", marketingController.exportData);
 
+// POST upload custom data
+router.post("/upload-custom", marketingController.uploadCustomData);
+
 module.exports = router;

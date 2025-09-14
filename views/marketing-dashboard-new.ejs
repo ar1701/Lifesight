@@ -51,7 +51,22 @@
                   fill="currentColor"
                 />
               </svg>
-              Import Data
+              Import Sample Data
+            </button>
+            <button class="btn btn-success" id="uploadCustomDataBtn">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 16H15L12 13L9 16ZM12 2C13.1 2 14 2.9 14 4V12H16L12 16L8 12H10V4C10 2.9 10.9 2 12 2ZM19 18V20H5V18H3V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V18H19Z"
+                  fill="currentColor"
+                />
+              </svg>
+              Upload Custom Data
             </button>
             <button class="btn btn-outline" id="refreshDataBtn">
               <svg
@@ -82,6 +97,21 @@
                 />
               </svg>
               Export Report
+            </button>
+            <button class="btn btn-info" id="dataGuideBtn">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M11 18H13V16H11V18ZM12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12S7.59 4 12 4 20 7.59 20 12 16.41 20 12 20ZM12 6C9.79 6 8 7.79 8 10H10C10 8.9 10.9 8 12 8S14 8.9 14 10C14 12 11 11.75 11 15H13C13 12.75 16 12.5 16 10C16 7.79 14.21 6 12 6Z"
+                  fill="currentColor"
+                />
+              </svg>
+              Data Guide
             </button>
           </div>
 
@@ -204,7 +234,14 @@
                   </svg>
                 </div>
                 <div class="metric-value" id="totalROAS">-</div>
-                <div class="metric-label">Total ROAS</div>
+                <div class="metric-label">
+                  <span
+                    class="metric-tooltip"
+                    data-tooltip="Return on Ad Spend: Revenue ÷ Spend. Shows how much revenue you generate for every dollar spent on advertising."
+                  >
+                    Total ROAS
+                  </span>
+                </div>
               </div>
               <div class="metric-card">
                 <div class="metric-icon success">
@@ -222,7 +259,14 @@
                   </svg>
                 </div>
                 <div class="metric-value" id="totalROI">-</div>
-                <div class="metric-label">Total ROI</div>
+                <div class="metric-label">
+                  <span
+                    class="metric-tooltip"
+                    data-tooltip="Return on Investment: (Revenue - Spend) ÷ Spend × 100. Measures the profitability of your marketing investment."
+                  >
+                    Total ROI
+                  </span>
+                </div>
               </div>
               <div class="metric-card">
                 <div class="metric-icon warning">
@@ -240,7 +284,14 @@
                   </svg>
                 </div>
                 <div class="metric-value" id="totalCAC">-</div>
-                <div class="metric-label">CAC</div>
+                <div class="metric-label">
+                  <span
+                    class="metric-tooltip"
+                    data-tooltip="Customer Acquisition Cost: Total Spend ÷ New Customers. The cost to acquire one new customer through marketing efforts."
+                  >
+                    CAC
+                  </span>
+                </div>
               </div>
               <div class="metric-card">
                 <div class="metric-icon info">
@@ -258,7 +309,14 @@
                   </svg>
                 </div>
                 <div class="metric-value" id="avgCTR">-</div>
-                <div class="metric-label">Avg CTR</div>
+                <div class="metric-label">
+                  <span
+                    class="metric-tooltip"
+                    data-tooltip="Click-Through Rate: Clicks ÷ Impressions × 100. Percentage of people who clicked your ad after seeing it."
+                  >
+                    Avg CTR
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -390,15 +448,89 @@
 
             <!-- Insights Section -->
             <div class="card mb-8">
-              <div class="card-header">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
                 <h5 class="card-title">AI-Powered Insights</h5>
+                <div class="insight-controls">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary active"
+                      id="allInsightsBtn"
+                      onclick="showInsightCategory('all')"
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      id="performanceInsightsBtn"
+                      onclick="showInsightCategory('performance')"
+                    >
+                      Performance
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      id="financialInsightsBtn"
+                      onclick="showInsightCategory('financial')"
+                    >
+                      Financial
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      id="recommendationInsightsBtn"
+                      onclick="showInsightCategory('recommendation')"
+                    >
+                      Recommendations
+                    </button>
+                  </div>
+                </div>
               </div>
               <div class="card-body">
+                <div class="insights-guide mb-4">
+                  <div class="alert alert-info">
+                    <h6 class="mb-2">📊 Marketing Insights Guide</h6>
+                    <p class="mb-2">
+                      Our AI analyzes your marketing data to provide actionable
+                      insights. Hover over any metric for detailed definitions.
+                    </p>
+                    <div class="row">
+                      <div class="col-md-4">
+                        <strong>Performance:</strong> Campaign effectiveness,
+                        reach, engagement
+                      </div>
+                      <div class="col-md-4">
+                        <strong>Financial:</strong> ROI, ROAS, costs,
+                        profitability
+                      </div>
+                      <div class="col-md-4">
+                        <strong>Recommendations:</strong> Optimization
+                        suggestions, next steps
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div id="insightsContainer">
                   <div class="loading">
                     <div class="spinner"></div>
                     <span>Generating insights...</span>
                   </div>
+                </div>
+                <div
+                  class="text-center mt-4"
+                  id="generateInsightsSection"
+                  style="display: none"
+                >
+                  <button
+                    class="btn btn-primary"
+                    onclick="generateSpecificInsights()"
+                  >
+                    <i class="bi bi-magic"></i>
+                    Generate New Insights
+                  </button>
                 </div>
               </div>
             </div>
@@ -1039,21 +1171,21 @@
         async function exportData() {
           try {
             showLoading();
-            
+
             const response = await fetch("/api/marketing/export");
-            
+
             if (response.ok) {
               const blob = await response.blob();
               const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.style.display = 'none';
+              const a = document.createElement("a");
+              a.style.display = "none";
               a.href = url;
-              a.download = 'marketing_data_export.csv';
+              a.download = "marketing_data_export.csv";
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
-              
+
               showSuccess("Data exported successfully!");
             } else {
               throw new Error("Failed to export data");
@@ -1096,7 +1228,510 @@
         function showError(message) {
           console.error("Error:", message);
         }
+
+        // Selective insights functionality
+        let allInsights = [];
+        let currentInsightCategory = "all";
+
+        function showInsightCategory(category) {
+          currentInsightCategory = category;
+
+          // Update button states
+          document.querySelectorAll(".insight-controls .btn").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          document
+            .getElementById(category + "InsightsBtn")
+            .classList.add("active");
+
+          // Filter and display insights
+          filterInsights(category);
+        }
+
+        function filterInsights(category) {
+          const container = document.getElementById("insightsContainer");
+
+          if (!allInsights || allInsights.length === 0) {
+            container.innerHTML =
+              '<p class="text-gray-500">No insights available. Generate insights first.</p>';
+            document.getElementById("generateInsightsSection").style.display =
+              "block";
+            return;
+          }
+
+          let filteredInsights = allInsights;
+
+          if (category !== "all") {
+            filteredInsights = allInsights.filter((insight) => {
+              switch (category) {
+                case "performance":
+                  return (
+                    insight.type === "performance" ||
+                    insight.title.toLowerCase().includes("performance") ||
+                    insight.title.toLowerCase().includes("ctr") ||
+                    insight.title.toLowerCase().includes("click")
+                  );
+                case "financial":
+                  return (
+                    insight.type === "financial" ||
+                    insight.title.toLowerCase().includes("roi") ||
+                    insight.title.toLowerCase().includes("roas") ||
+                    insight.title.toLowerCase().includes("cost") ||
+                    insight.title.toLowerCase().includes("revenue")
+                  );
+                case "recommendation":
+                  return (
+                    insight.type === "recommendation" ||
+                    insight.message.toLowerCase().includes("recommend") ||
+                    insight.message.toLowerCase().includes("should") ||
+                    insight.message.toLowerCase().includes("optimize")
+                  );
+                default:
+                  return true;
+              }
+            });
+          }
+
+          if (filteredInsights.length === 0) {
+            container.innerHTML = `<p class="text-gray-500">No ${category} insights available.</p>`;
+            return;
+          }
+
+          container.innerHTML = filteredInsights
+            .map(
+              (insight) => `
+              <div class="alert alert-${getInsightAlertType(
+                insight.type
+              )} mb-3">
+                <h6 class="font-semibold mb-2">${insight.title}</h6>
+                <p class="mb-2">${insight.message}</p>
+                <p class="mb-0"><strong>Recommendation:</strong> ${
+                  insight.recommendation
+                }</p>
+              </div>
+            `
+            )
+            .join("");
+        }
+
+        function generateSpecificInsights() {
+          loadInsights();
+        }
+
+        // Override the existing renderInsights function to store insights
+        const originalRenderInsights = renderInsights;
+        renderInsights = function (insights) {
+          allInsights = insights;
+          document.getElementById("generateInsightsSection").style.display =
+            "block";
+          filterInsights(currentInsightCategory);
+        };
+
+        // Custom data upload functionality
+        function showCustomDataUpload() {
+          new bootstrap.Modal(
+            document.getElementById("customDataUploadModal")
+          ).show();
+        }
+
+        function showDataGuide() {
+          new bootstrap.Modal(document.getElementById("dataGuideModal")).show();
+        }
+
+        async function uploadCustomData() {
+          const campaignFiles =
+            document.getElementById("campaignDataFile").files;
+          const businessFile =
+            document.getElementById("businessDataFile").files[0];
+
+          if (campaignFiles.length === 0 && !businessFile) {
+            showError("Please select at least one file to upload.");
+            return;
+          }
+
+          const formData = new FormData();
+
+          // Add campaign files
+          for (let i = 0; i < campaignFiles.length; i++) {
+            formData.append("campaignFiles", campaignFiles[i]);
+          }
+
+          // Add business file
+          if (businessFile) {
+            formData.append("businessFile", businessFile);
+          }
+
+          try {
+            showLoading();
+
+            const response = await fetch("/api/marketing/upload-custom", {
+              method: "POST",
+              body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              bootstrap.Modal.getInstance(
+                document.getElementById("customDataUploadModal")
+              ).hide();
+              showSuccess("Custom data uploaded successfully!");
+              await loadMarketingData();
+
+              // Clear file inputs
+              document.getElementById("campaignDataFile").value = "";
+              document.getElementById("businessDataFile").value = "";
+            } else {
+              throw new Error(result.error || "Failed to upload data");
+            }
+          } catch (error) {
+            console.error("Error uploading data:", error);
+            showError(`Error uploading data: ${error.message}`);
+          } finally {
+            hideLoading();
+          }
+        }
+
+        function downloadTemplate(type) {
+          let csvContent, filename;
+
+          if (type === "campaign") {
+            csvContent = `campaign_name,platform,date,spend,impressions,clicks,attributed_revenue
+Summer Sale,Facebook,2024-01-01,1000,50000,2500,5000
+Holiday Campaign,Google,2024-01-02,1500,75000,3000,7500
+Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200`;
+            filename = "campaign_data_template.csv";
+          } else {
+            csvContent = `date,total_revenue,total_orders,new_customers,cogs
+2024-01-01,15000,150,45,9000
+2024-01-02,18000,180,52,10800
+2024-01-03,12000,120,38,7200`;
+            filename = "business_data_template.csv";
+          }
+
+          const blob = new Blob([csvContent], { type: "text/csv" });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }
+
+        // Add event listeners for new buttons
+        document.addEventListener("DOMContentLoaded", function () {
+          document
+            .getElementById("uploadCustomDataBtn")
+            .addEventListener("click", showCustomDataUpload);
+          document
+            .getElementById("dataGuideBtn")
+            .addEventListener("click", showDataGuide);
+        });
       });
     </script>
+
+    <!-- Custom Data Upload Modal -->
+    <div class="modal fade" id="customDataUploadModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Upload Custom Marketing Data</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">
+              <h6 class="mb-2">📁 Supported File Formats</h6>
+              <p class="mb-0">
+                Upload CSV or Excel files (.csv, .xlsx, .xls) with your
+                marketing and business data.
+              </p>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h6 class="mb-0">Marketing Campaign Data</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <label class="form-label">Upload Campaign Data</label>
+                      <input
+                        type="file"
+                        class="form-control"
+                        id="campaignDataFile"
+                        accept=".csv,.xlsx,.xls"
+                        multiple
+                      />
+                      <small class="form-text text-muted"
+                        >Facebook, Google, TikTok campaign data</small
+                      >
+                    </div>
+                    <div class="required-columns">
+                      <strong>Required Columns:</strong>
+                      <ul class="small mt-1">
+                        <li>campaign_name</li>
+                        <li>platform (Facebook/Google/TikTok)</li>
+                        <li>date</li>
+                        <li>spend</li>
+                        <li>impressions</li>
+                        <li>clicks</li>
+                        <li>attributed_revenue</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h6 class="mb-0">Business Metrics Data</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <label class="form-label">Upload Business Data</label>
+                      <input
+                        type="file"
+                        class="form-control"
+                        id="businessDataFile"
+                        accept=".csv,.xlsx,.xls"
+                      />
+                      <small class="form-text text-muted"
+                        >Revenue, orders, customer data</small
+                      >
+                    </div>
+                    <div class="required-columns">
+                      <strong>Required Columns:</strong>
+                      <ul class="small mt-1">
+                        <li>date</li>
+                        <li>total_revenue</li>
+                        <li>total_orders</li>
+                        <li>new_customers</li>
+                        <li>cogs (Cost of Goods Sold)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <div class="alert alert-warning">
+                <h6 class="mb-2">📋 Data Format Guidelines</h6>
+                <ul class="mb-0">
+                  <li>
+                    <strong>Date Format:</strong> YYYY-MM-DD (e.g., 2024-01-15)
+                  </li>
+                  <li>
+                    <strong>Numbers:</strong> No currency symbols, use decimal
+                    points
+                  </li>
+                  <li>
+                    <strong>Platform Names:</strong> Exactly "Facebook",
+                    "Google", or "TikTok"
+                  </li>
+                  <li>
+                    <strong>Headers:</strong> First row must contain column
+                    names
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="uploadCustomData()"
+            >
+              <i class="bi bi-upload"></i> Upload Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Guide Modal -->
+    <div class="modal fade" id="dataGuideModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">📊 Marketing Data Guide & Definitions</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">💰 Financial Metrics</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="metric-definition mb-3">
+                      <strong>ROI (Return on Investment)</strong>
+                      <p class="mb-1 text-muted">
+                        Formula: (Revenue - Spend) ÷ Spend × 100
+                      </p>
+                      <p class="small">
+                        Measures the profitability of your marketing investment.
+                        Higher is better.
+                      </p>
+                    </div>
+                    <div class="metric-definition mb-3">
+                      <strong>ROAS (Return on Ad Spend)</strong>
+                      <p class="mb-1 text-muted">Formula: Revenue ÷ Spend</p>
+                      <p class="small">
+                        Shows how much revenue you generate for every dollar
+                        spent on advertising.
+                      </p>
+                    </div>
+                    <div class="metric-definition mb-3">
+                      <strong>COGS (Cost of Goods Sold)</strong>
+                      <p class="mb-1 text-muted">
+                        Direct costs of producing goods sold
+                      </p>
+                      <p class="small">
+                        Includes materials, labor, and direct overhead costs for
+                        products sold.
+                      </p>
+                    </div>
+                    <div class="metric-definition">
+                      <strong>CAC (Customer Acquisition Cost)</strong>
+                      <p class="mb-1 text-muted">
+                        Formula: Total Spend ÷ New Customers
+                      </p>
+                      <p class="small">
+                        The cost to acquire one new customer through marketing
+                        efforts.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">📈 Performance Metrics</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="metric-definition mb-3">
+                      <strong>CTR (Click-Through Rate)</strong>
+                      <p class="mb-1 text-muted">
+                        Formula: Clicks ÷ Impressions × 100
+                      </p>
+                      <p class="small">
+                        Percentage of people who clicked your ad after seeing
+                        it. Higher indicates better ad relevance.
+                      </p>
+                    </div>
+                    <div class="metric-definition mb-3">
+                      <strong>CPC (Cost Per Click)</strong>
+                      <p class="mb-1 text-muted">
+                        Formula: Total Spend ÷ Total Clicks
+                      </p>
+                      <p class="small">
+                        Average amount you pay for each click on your ads. Lower
+                        is generally better.
+                      </p>
+                    </div>
+                    <div class="metric-definition mb-3">
+                      <strong>Conversion Rate</strong>
+                      <p class="mb-1 text-muted">
+                        Formula: Orders ÷ Clicks × 100
+                      </p>
+                      <p class="small">
+                        Percentage of clicks that result in a purchase or
+                        desired action.
+                      </p>
+                    </div>
+                    <div class="metric-definition">
+                      <strong>Impressions</strong>
+                      <p class="mb-1 text-muted">
+                        Number of times your ad was shown
+                      </p>
+                      <p class="small">
+                        Total reach of your advertising campaigns across all
+                        platforms.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0">📋 Sample Data Templates</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Marketing Campaign Data Template:</h6>
+                    <pre
+                      class="bg-light p-3 small"
+                    ><code>campaign_name,platform,date,spend,impressions,clicks,attributed_revenue
+Summer Sale,Facebook,2024-01-01,1000,50000,2500,5000
+Holiday Campaign,Google,2024-01-02,1500,75000,3000,7500
+Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Business Metrics Data Template:</h6>
+                    <pre
+                      class="bg-light p-3 small"
+                    ><code>date,total_revenue,total_orders,new_customers,cogs
+2024-01-01,15000,150,45,9000
+2024-01-02,18000,180,52,10800
+2024-01-03,12000,120,38,7200</code></pre>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="downloadTemplate('campaign')"
+                  >
+                    <i class="bi bi-download"></i> Download Campaign Template
+                  </button>
+                  <button
+                    class="btn btn-outline-primary btn-sm ms-2"
+                    onclick="downloadTemplate('business')"
+                  >
+                    <i class="bi bi-download"></i> Download Business Template
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
