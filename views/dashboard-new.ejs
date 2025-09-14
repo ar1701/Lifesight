@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/css/modern.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <%- include('partials/navbar') -%>
+
+      <div class="main-layout">
+        <%- include('partials/sidebar') -%>
+
+        <main class="main-content">
+          <!-- Page Header -->
+          <div class="mb-8">
+            <div class="flex items-center justify-between">
+              <div>
+                <h1 class="mb-2"><%= dashboard.name %></h1>
+                <% if(dashboard.description) { %>
+                <p class="text-gray-600"><%= dashboard.description %></p>
+                <% } %>
+              </div>
+              <div class="flex gap-3">
+                <button class="btn btn-outline" onclick="history.back()">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Back
+                </button>
+                <button
+                  class="btn btn-primary"
+                  onclick="window.location.href='/app'"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Add Widget
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Widgets -->
+          <div class="dashboard-grid" id="widgets-grid">
+            <% if(widgets && widgets.length > 0) { %> <% widgets.forEach(widget => { %>
+            <div
+              class="card widget-container"
+              data-widget-id="<%= widget._id %>"
+            >
+              <div class="widget-header">
+                <div class="widget-title">
+                  <% if(widget.type === 'chart') { %>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Chart <% } else { %>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 3V21H21V3H3ZM19 19H5V5H19V19ZM7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Table <% } %>
+                </div>
+                <button
+                  class="btn btn-ghost btn-sm delete-widget-btn"
+                  title="Delete Widget"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="widget-body">
+                <!-- Widget content will be rendered by JavaScript -->
+              </div>
+            </div>
+            <% }) %> <% } else { %>
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <h3>No Widgets Yet</h3>
+              <p>
+                This dashboard is empty. Go to the home page to generate charts
+                and tables, then add them to this dashboard.
+              </p>
+              <button
+                class="btn btn-primary"
+                onclick="window.location.href='/app'"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                Create Widgets
+              </button>
+            </div>
+            <% } %>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script id="widgets-data" type="application/json">
+      <%- JSON.stringify(widgets || []) %>
+    </script>
+    <script>
+      // Pass widgets data from EJS to JavaScript
+      const widgetsData = JSON.parse(
+        document.getElementById("widgets-data").textContent
+      );
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Load and render widgets
+        function loadDashboardWidgets() {
+          if (widgetsData && widgetsData.length > 0) {
+            widgetsData.forEach((widget) => {
+              renderWidgetOnDashboard(widget);
+            });
+          }
+        }
+
+        // Render widget on dashboard
+        function renderWidgetOnDashboard(widget) {
+          const widgetContainer = document.querySelector(
+            `[data-widget-id="${widget._id}"]`
+          );
+          if (!widgetContainer) return;
+
+          const body = widgetContainer.querySelector(".widget-body");
+          if (!body) return;
+
+          try {
+            if (widget.type === "chart") {
+              const canvas = document.createElement("canvas");
+              canvas.width = 400;
+              canvas.height = 300;
+              body.appendChild(canvas);
+
+              if (widget.config) {
+                new Chart(canvas.getContext("2d"), widget.config);
+              }
+            } else if (widget.type === "table") {
+              const tableHtml = generateTable(widget.data, false);
+              body.innerHTML = tableHtml;
+            }
+          } catch (error) {
+            console.error("Error rendering widget:", error);
+            body.innerHTML =
+              '<p class="text-gray-500">Error rendering widget</p>';
+          }
+        }
+
+        // Generate table HTML
+        function generateTable(data, showPagination = true) {
+          if (!data || !data.data) {
+            return '<p class="text-gray-500">No data available</p>';
+          }
+
+          const headers = data.data.headers || [];
+          const rows = data.data.rows || [];
+
+          if (headers.length === 0 || rows.length === 0) {
+            return '<p class="text-gray-500">No data available</p>';
+          }
+
+          let tableHtml = '<div class="table-container"><table class="table">';
+
+          // Header
+          tableHtml += "<thead><tr>";
+          headers.forEach((header) => {
+            tableHtml += `<th>${header}</th>`;
+          });
+          tableHtml += "</tr></thead>";
+
+          // Body
+          tableHtml += "<tbody>";
+          rows.forEach((row) => {
+            tableHtml += "<tr>";
+            row.forEach((cell) => {
+              tableHtml += `<td>${cell}</td>`;
+            });
+            tableHtml += "</tr>";
+          });
+          tableHtml += "</tbody></table></div>";
+
+          return tableHtml;
+        }
+
+        // Delete widget functionality
+        document.addEventListener("click", (event) => {
+          if (event.target.closest(".delete-widget-btn")) {
+            const widgetContainer = event.target.closest(".widget-container");
+            const widgetId = widgetContainer.dataset.widgetId;
+            deleteWidget(widgetId, widgetContainer);
+          }
+        });
+
+        async function deleteWidget(widgetId, widgetElement) {
+          if (
+            !confirm(
+              "Are you sure you want to delete this widget? This action cannot be undone."
+            )
+          ) {
+            return;
+          }
+
+          try {
+            const response = await fetch(`/api/widgets/${widgetId}`, {
+              method: "DELETE",
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+              widgetElement.remove();
+
+              // Check if no widgets remain
+              const remainingWidgets =
+                document.querySelectorAll(".widget-container");
+              if (remainingWidgets.length === 0) {
+                location.reload(); // Reload to show empty state
+              }
+            } else {
+              throw new Error(result.error || "Failed to delete widget");
+            }
+          } catch (error) {
+            console.error("Error deleting widget:", error);
+            alert(`Error deleting widget: ${error.message}`);
+          }
+        }
+
+        // Initialize
+        loadDashboardWidgets();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,233 @@
+:root {
+  --sidebar-width: 280px;
+  --primary-color: #0d6efd;
+  --dark-color: #212529;
+  --light-gray: #f8f9fa;
+  --border-color: #dee2e6;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--light-gray);
+  padding-top: 56px; /* Height of the navbar */
+}
+
+.main-container {
+  display: flex;
+}
+
+#sidebar {
+  width: var(--sidebar-width);
+  height: calc(100vh - 56px);
+  position: fixed;
+  top: 56px;
+  left: 0;
+  background-color: #fff;
+  border-right: 1px solid var(--border-color);
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+#main-content {
+  margin-left: var(--sidebar-width);
+  padding: 2rem;
+  width: calc(100% - var(--sidebar-width));
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+}
+
+/* File Section */
+.file-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.file-list-item.selected {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.file-list-item .file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+}
+
+.file-list-item .btn-group .btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.file-list-item .btn-group .delete-file-btn {
+  transition: all 0.2s ease;
+}
+
+.file-list-item .btn-group .delete-file-btn:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+/* Chat Section */
+#chat-box {
+  height: 400px;
+  overflow-y: auto;
+  background-color: #fdfdff;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.message {
+  margin-bottom: 1rem;
+  display: flex;
+}
+
+.message .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.message.user-message .avatar {
+  background-color: #6c757d;
+}
+
+.message .text {
+  background-color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  max-width: 85%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.user-message .text {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+/* Widget & Dashboard */
+.widget-container {
+  background-color: #fff;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.widget-container .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+}
+
+.widget-container .delete-widget-btn {
+  transition: all 0.2s ease;
+}
+
+.widget-container .delete-widget-btn:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+#dashboard-widgets .widget-container {
+  height: 100%;
+}
+
+/* Modal */
+.modal-dialog-xl {
+  max-width: 95%;
+}
+
+#preview-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Login/Register Page */
+.auth-container {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Auth Page Redesign */
+.auth-page {
+  background: linear-gradient(
+    to right,
+    #6a11cb 0%,
+    #2575fc 100%
+  ); /* A nice gradient background */
+  padding: 2rem 0;
+}
+
+.auth-card {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.95
+  ); /* Slightly transparent white card */
+  backdrop-filter: blur(10px); /* Frosted glass effect */
+  border-radius: 1rem !important;
+  overflow: hidden;
+}
+
+.auth-card .card-body {
+  padding: 3rem !important;
+}
+
+.auth-card .form-floating label {
+  color: #6c757d;
+}
+
+.auth-card .form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.auth-card .btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.auth-card .btn-primary:hover {
+  background-color: #0a58ca;
+  border-color: #0a53be;
+  transform: translateY(-2px);
+}
+
+.auth-card .text-primary {
+  color: var(--primary-color) !important;
+}

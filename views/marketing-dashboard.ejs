@@ -1,0 +1,667 @@
+<%- include('partials/header') -%>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+      <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link" href="/app">
+              <i class="bi bi-house me-2"></i>Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/app/dashboards">
+              <i class="bi bi-grid-3x3-gap-fill me-2"></i>All Dashboards
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/app/marketing">
+              <i class="bi bi-graph-up me-2"></i>Marketing Intelligence
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div
+        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+      >
+        <div>
+          <h1 class="h2">Marketing Intelligence Dashboard</h1>
+          <p class="text-muted mb-0">
+            Comprehensive analysis of marketing performance and business
+            outcomes
+          </p>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-primary" id="importDataBtn">
+              <i class="bi bi-upload me-2"></i>Import Data
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              id="refreshDataBtn"
+            >
+              <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="text-center py-5" style="display: none">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading marketing data...</p>
+      </div>
+
+      <!-- Data Import State -->
+      <div id="importState" class="text-center py-5">
+        <i class="bi bi-database display-1 text-muted"></i>
+        <h3 class="mt-3">No Marketing Data</h3>
+        <p class="text-muted">
+          Import your marketing data to start analyzing performance.
+        </p>
+        <button type="button" class="btn btn-primary" id="importDataBtnMain">
+          <i class="bi bi-upload me-2"></i>Import Marketing Data
+        </button>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div id="dashboardContent" style="display: none">
+        <!-- Key Metrics Cards -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-currency-dollar display-4 text-success"></i>
+                <h5 class="card-title mt-2">Total ROAS</h5>
+                <h3 class="text-success" id="totalROAS">-</h3>
+                <small class="text-muted">Return on Ad Spend</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-graph-up display-4 text-primary"></i>
+                <h5 class="card-title mt-2">Total ROI</h5>
+                <h3 class="text-primary" id="totalROI">-</h3>
+                <small class="text-muted">Return on Investment</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-people display-4 text-info"></i>
+                <h5 class="card-title mt-2">CAC</h5>
+                <h3 class="text-info" id="totalCAC">-</h3>
+                <small class="text-muted">Customer Acquisition Cost</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-mouse display-4 text-warning"></i>
+                <h5 class="card-title mt-2">Avg CTR</h5>
+                <h3 class="text-warning" id="avgCTR">-</h3>
+                <small class="text-muted">Click-Through Rate</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+          <!-- Platform Performance -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Platform Performance</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="platformChart" width="400" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROAS by Platform -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">ROAS by Platform</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="roasChart" width="400" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Series and Tactics -->
+        <div class="row g-4 mb-4">
+          <!-- Time Series -->
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Performance Over Time</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="timeSeriesChart" width="600" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tactic Performance -->
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Tactic Performance</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="tacticChart" width="300" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">AI-Powered Insights</h5>
+              </div>
+              <div class="card-body">
+                <div id="insightsContainer">
+                  <div class="text-center py-3">
+                    <div
+                      class="spinner-border spinner-border-sm text-primary"
+                      role="status"
+                    >
+                      <span class="visually-hidden">Loading insights...</span>
+                    </div>
+                    <span class="ms-2">Generating insights...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Tables -->
+        <div class="row g-4">
+          <!-- Platform Summary -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Platform Summary</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Platform</th>
+                        <th>Spend</th>
+                        <th>Revenue</th>
+                        <th>ROAS</th>
+                        <th>ROI</th>
+                      </tr>
+                    </thead>
+                    <tbody id="platformTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Business Metrics -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">Business Metrics</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>Unit</th>
+                      </tr>
+                    </thead>
+                    <tbody id="businessTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<%- include('partials/footer') -%>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let marketingData = null;
+    let charts = {};
+
+    // Initialize dashboard
+    initializeDashboard();
+
+    // Event listeners
+    document
+      .getElementById("importDataBtn")
+      .addEventListener("click", importMarketingData);
+    document
+      .getElementById("importDataBtnMain")
+      .addEventListener("click", importMarketingData);
+    document
+      .getElementById("refreshDataBtn")
+      .addEventListener("click", loadMarketingData);
+
+    async function initializeDashboard() {
+      await loadMarketingData();
+    }
+
+    async function importMarketingData() {
+      showLoading();
+
+      try {
+        const response = await fetch("/api/marketing/import", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showSuccess("Marketing data imported successfully!");
+          await loadMarketingData();
+        } else {
+          throw new Error(result.error || "Failed to import data");
+        }
+      } catch (error) {
+        console.error("Error importing data:", error);
+        showError(`Error importing data: ${error.message}`);
+      }
+    }
+
+    async function loadMarketingData() {
+      showLoading();
+
+      try {
+        const response = await fetch("/api/marketing/analytics");
+        const data = await response.json();
+
+        if (response.ok) {
+          marketingData = data;
+          renderDashboard();
+          loadInsights();
+        } else {
+          throw new Error(data.error || "Failed to load data");
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        showError(`Error loading data: ${error.message}`);
+        showImportState();
+      }
+    }
+
+    function renderDashboard() {
+      if (!marketingData) {
+        showImportState();
+        return;
+      }
+
+      hideLoading();
+      document.getElementById("dashboardContent").style.display = "block";
+      document.getElementById("importState").style.display = "none";
+
+      // Update key metrics
+      updateKeyMetrics();
+
+      // Render charts
+      renderPlatformChart();
+      renderROASChart();
+      renderTimeSeriesChart();
+      renderTacticChart();
+
+      // Update tables
+      updatePlatformTable();
+      updateBusinessTable();
+    }
+
+    function updateKeyMetrics() {
+      const summary = marketingData.summary;
+
+      document.getElementById("totalROAS").textContent =
+        summary.roas.toFixed(2) + "x";
+      document.getElementById("totalROI").textContent =
+        summary.roi.toFixed(1) + "%";
+      document.getElementById("totalCAC").textContent =
+        "$" + summary.cac.toFixed(2);
+      document.getElementById("avgCTR").textContent =
+        summary.ctr.toFixed(2) + "%";
+    }
+
+    function renderPlatformChart() {
+      const ctx = document.getElementById("platformChart").getContext("2d");
+      const platforms = Object.keys(marketingData.byPlatform);
+      const spendData = platforms.map((p) => marketingData.byPlatform[p].spend);
+      const revenueData = platforms.map(
+        (p) => marketingData.byPlatform[p].revenue
+      );
+
+      if (charts.platform) charts.platform.destroy();
+
+      charts.platform = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: platforms,
+          datasets: [
+            {
+              label: "Spend",
+              data: spendData,
+              backgroundColor: "rgba(54, 162, 235, 0.8)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 1,
+            },
+            {
+              label: "Revenue",
+              data: revenueData,
+              backgroundColor: "rgba(75, 192, 192, 0.8)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+
+    function renderROASChart() {
+      const ctx = document.getElementById("roasChart").getContext("2d");
+      const platforms = Object.keys(marketingData.byPlatform);
+      const roasData = platforms.map((p) => marketingData.byPlatform[p].roas);
+
+      if (charts.roas) charts.roas.destroy();
+
+      charts.roas = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: platforms,
+          datasets: [
+            {
+              data: roasData,
+              backgroundColor: [
+                "rgba(255, 99, 132, 0.8)",
+                "rgba(54, 162, 235, 0.8)",
+                "rgba(255, 205, 86, 0.8)",
+              ],
+              borderColor: [
+                "rgba(255, 99, 132, 1)",
+                "rgba(54, 162, 235, 1)",
+                "rgba(255, 205, 86, 1)",
+              ],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "bottom",
+            },
+          },
+        },
+      });
+    }
+
+    function renderTimeSeriesChart() {
+      const ctx = document.getElementById("timeSeriesChart").getContext("2d");
+      const timeSeries = marketingData.timeSeries;
+      const dates = timeSeries.map((d) => d.date);
+      const spendData = timeSeries.map((d) => d.spend);
+      const revenueData = timeSeries.map((d) => d.revenue);
+
+      if (charts.timeSeries) charts.timeSeries.destroy();
+
+      charts.timeSeries = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: "Spend",
+              data: spendData,
+              borderColor: "rgba(255, 99, 132, 1)",
+              backgroundColor: "rgba(255, 99, 132, 0.2)",
+              tension: 0.1,
+            },
+            {
+              label: "Revenue",
+              data: revenueData,
+              borderColor: "rgba(75, 192, 192, 1)",
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              tension: 0.1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+
+    function renderTacticChart() {
+      const ctx = document.getElementById("tacticChart").getContext("2d");
+      const tactics = Object.keys(marketingData.byTactic);
+      const roiData = tactics.map((t) => marketingData.byTactic[t].roi);
+
+      if (charts.tactic) charts.tactic.destroy();
+
+      charts.tactic = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: tactics,
+          datasets: [
+            {
+              label: "ROI (%)",
+              data: roiData,
+              backgroundColor: "rgba(153, 102, 255, 0.8)",
+              borderColor: "rgba(153, 102, 255, 1)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          indexAxis: "y",
+          scales: {
+            x: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+
+    function updatePlatformTable() {
+      const tbody = document.getElementById("platformTableBody");
+      tbody.innerHTML = "";
+
+      Object.keys(marketingData.byPlatform).forEach((platform) => {
+        const data = marketingData.byPlatform[platform];
+        const row = tbody.insertRow();
+        row.innerHTML = `
+        <td>${platform}</td>
+        <td>$${data.spend.toFixed(2)}</td>
+        <td>$${data.revenue.toFixed(2)}</td>
+        <td>${data.roas.toFixed(2)}x</td>
+        <td>${data.roi.toFixed(1)}%</td>
+      `;
+      });
+    }
+
+    function updateBusinessTable() {
+      const tbody = document.getElementById("businessTableBody");
+      const metrics = marketingData.businessMetrics;
+
+      tbody.innerHTML = `
+      <tr><td>Total Revenue</td><td>$${metrics.totalRevenue.toFixed(
+        2
+      )}</td><td>USD</td></tr>
+      <tr><td>Total Orders</td><td>${metrics.totalOrders.toLocaleString()}</td><td>Orders</td></tr>
+      <tr><td>New Customers</td><td>${metrics.totalCustomers.toLocaleString()}</td><td>Customers</td></tr>
+      <tr><td>Revenue per Customer</td><td>$${metrics.revenuePerCustomer.toFixed(
+        2
+      )}</td><td>USD</td></tr>
+      <tr><td>Average Order Value</td><td>$${metrics.orderValue.toFixed(
+        2
+      )}</td><td>USD</td></tr>
+      <tr><td>Profit Margin</td><td>${metrics.profitMargin.toFixed(
+        1
+      )}%</td><td>%</td></tr>
+    `;
+    }
+
+    async function loadInsights() {
+      try {
+        const response = await fetch("/api/marketing/insights");
+        const data = await response.json();
+
+        if (response.ok) {
+          renderInsights(data.insights);
+        }
+      } catch (error) {
+        console.error("Error loading insights:", error);
+      }
+    }
+
+    function renderInsights(insights) {
+      const container = document.getElementById("insightsContainer");
+
+      if (insights.length === 0) {
+        container.innerHTML =
+          '<p class="text-muted">No insights available at this time.</p>';
+        return;
+      }
+
+      container.innerHTML = insights
+        .map(
+          (insight) => `
+      <div class="alert alert-${getInsightAlertType(
+        insight.type
+      )} alert-dismissible fade show" role="alert">
+        <h6 class="alert-heading">${insight.title}</h6>
+        <p class="mb-2">${insight.message}</p>
+        <hr>
+        <p class="mb-0"><strong>Recommendation:</strong> ${
+          insight.recommendation
+        }</p>
+      </div>
+    `
+        )
+        .join("");
+    }
+
+    function getInsightAlertType(type) {
+      switch (type) {
+        case "success":
+          return "success";
+        case "warning":
+          return "warning";
+        case "performance":
+          return "info";
+        default:
+          return "secondary";
+      }
+    }
+
+    function showLoading() {
+      document.getElementById("loadingState").style.display = "block";
+      document.getElementById("dashboardContent").style.display = "none";
+      document.getElementById("importState").style.display = "none";
+    }
+
+    function showImportState() {
+      document.getElementById("loadingState").style.display = "none";
+      document.getElementById("dashboardContent").style.display = "none";
+      document.getElementById("importState").style.display = "block";
+    }
+
+    function hideLoading() {
+      document.getElementById("loadingState").style.display = "none";
+    }
+
+    function showSuccess(message) {
+      // You can implement a toast notification here
+      console.log("Success:", message);
+    }
+
+    function showError(message) {
+      // You can implement a toast notification here
+      console.error("Error:", message);
+    }
+  });
+</script>
+
+<style>
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar .nav-link {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .sidebar .nav-link.active {
+    color: #0d6efd;
+  }
+
+  .card {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+</style>

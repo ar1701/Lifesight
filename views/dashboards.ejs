@@ -1,0 +1,428 @@
+<%- include('partials/header') -%>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+      <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link" href="/app">
+              <i class="bi bi-house me-2"></i>Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/app/dashboards">
+              <i class="bi bi-grid-3x3-gap-fill me-2"></i>Dashboards
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/app/marketing">
+              <i class="bi bi-graph-up me-2"></i>Marketing Intelligence
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div
+        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+      >
+        <h1 class="h2">My Dashboards</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createDashboardModal"
+          >
+            <i class="bi bi-plus-circle me-2"></i>Create Dashboard
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboards Grid -->
+      <div class="row g-4">
+        <% if(dashboards && dashboards.length > 0) { %> <%
+        dashboards.forEach(dashboard => { %>
+        <div class="col-md-6 col-lg-4">
+          <div
+            class="card h-100 dashboard-card"
+            data-dashboard-id="<%= dashboard._id %>"
+          >
+            <div class="card-body d-flex flex-column">
+              <div
+                class="d-flex justify-content-between align-items-start mb-3"
+              >
+                <h5 class="card-title mb-0"><%= dashboard.name %></h5>
+                <div class="dropdown">
+                  <button
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a
+                        class="dropdown-item"
+                        href="/app/dashboard/<%= dashboard._id %>"
+                      >
+                        <i class="bi bi-eye me-2"></i>View
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item edit-dashboard-btn"
+                        href="#"
+                        data-dashboard-id="<%= dashboard._id %>"
+                      >
+                        <i class="bi bi-pencil me-2"></i>Edit
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                      <a
+                        class="dropdown-item delete-dashboard-btn text-danger"
+                        href="#"
+                        data-dashboard-id="<%= dashboard._id %>"
+                      >
+                        <i class="bi bi-trash me-2"></i>Delete
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <% if(dashboard.description) { %>
+              <p class="card-text text-muted small mb-3">
+                <%= dashboard.description %>
+              </p>
+              <% } %>
+
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    <i class="bi bi-calendar me-1"></i>
+                    <%= new Date(dashboard.updatedAt).toLocaleDateString() %>
+                  </small>
+                  <a
+                    href="/app/dashboard/<%= dashboard._id %>"
+                    class="btn btn-primary btn-sm"
+                  >
+                    <i class="bi bi-arrow-right me-1"></i>Open
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% }) %> <% } else { %>
+        <div class="col-12">
+          <div class="text-center py-5">
+            <i class="bi bi-grid-3x3-gap display-1 text-muted"></i>
+            <h3 class="mt-3">No Dashboards Yet</h3>
+            <p class="text-muted">
+              Create your first dashboard to start organizing your data
+              visualizations.
+            </p>
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#createDashboardModal"
+            >
+              <i class="bi bi-plus-circle me-2"></i>Create Your First Dashboard
+            </button>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Create Dashboard Modal -->
+<div
+  class="modal fade"
+  id="createDashboardModal"
+  tabindex="-1"
+  aria-labelledby="createDashboardModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createDashboardModalLabel">
+          Create New Dashboard
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="createDashboardForm">
+          <div class="mb-3">
+            <label for="dashboardName" class="form-label">Dashboard Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="dashboardName"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="dashboardDescription" class="form-label"
+              >Description (Optional)</label
+            >
+            <textarea
+              class="form-control"
+              id="dashboardDescription"
+              rows="3"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="createDashboardBtn">
+          Create Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Dashboard Modal -->
+<div
+  class="modal fade"
+  id="editDashboardModal"
+  tabindex="-1"
+  aria-labelledby="editDashboardModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editDashboardModalLabel">Edit Dashboard</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="editDashboardForm">
+          <input type="hidden" id="editDashboardId" />
+          <div class="mb-3">
+            <label for="editDashboardName" class="form-label"
+              >Dashboard Name</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="editDashboardName"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="editDashboardDescription" class="form-label"
+              >Description (Optional)</label
+            >
+            <textarea
+              class="form-control"
+              id="editDashboardDescription"
+              rows="3"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="updateDashboardBtn">
+          Update Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') -%>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Create Dashboard
+    document
+      .getElementById("createDashboardBtn")
+      .addEventListener("click", async function () {
+        const name = document.getElementById("dashboardName").value.trim();
+        const description = document
+          .getElementById("dashboardDescription")
+          .value.trim();
+
+        if (!name) {
+          alert("Please enter a dashboard name");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/dashboards", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, description }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            location.reload(); // Reload to show new dashboard
+          } else {
+            throw new Error(result.error || "Failed to create dashboard");
+          }
+        } catch (error) {
+          console.error("Error creating dashboard:", error);
+          alert(`Error creating dashboard: ${error.message}`);
+        }
+      });
+
+    // Edit Dashboard
+    document.querySelectorAll(".edit-dashboard-btn").forEach((btn) => {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const dashboardId = this.dataset.dashboardId;
+        const dashboardCard = document.querySelector(
+          `[data-dashboard-id="${dashboardId}"]`
+        );
+        const name = dashboardCard.querySelector(".card-title").textContent;
+        const description =
+          dashboardCard.querySelector(".card-text")?.textContent || "";
+
+        document.getElementById("editDashboardId").value = dashboardId;
+        document.getElementById("editDashboardName").value = name;
+        document.getElementById("editDashboardDescription").value = description;
+
+        const modal = new bootstrap.Modal(
+          document.getElementById("editDashboardModal")
+        );
+        modal.show();
+      });
+    });
+
+    // Update Dashboard
+    document
+      .getElementById("updateDashboardBtn")
+      .addEventListener("click", async function () {
+        const dashboardId = document.getElementById("editDashboardId").value;
+        const name = document.getElementById("editDashboardName").value.trim();
+        const description = document
+          .getElementById("editDashboardDescription")
+          .value.trim();
+
+        if (!name) {
+          alert("Please enter a dashboard name");
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/dashboards/${dashboardId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, description }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            location.reload(); // Reload to show updated dashboard
+          } else {
+            throw new Error(result.error || "Failed to update dashboard");
+          }
+        } catch (error) {
+          console.error("Error updating dashboard:", error);
+          alert(`Error updating dashboard: ${error.message}`);
+        }
+      });
+
+    // Delete Dashboard
+    document.querySelectorAll(".delete-dashboard-btn").forEach((btn) => {
+      btn.addEventListener("click", async function (e) {
+        e.preventDefault();
+        const dashboardId = this.dataset.dashboardId;
+        const dashboardCard = document.querySelector(
+          `[data-dashboard-id="${dashboardId}"]`
+        );
+        const name = dashboardCard.querySelector(".card-title").textContent;
+
+        if (
+          !confirm(
+            `Are you sure you want to delete "${name}"? This will also delete all widgets in this dashboard.`
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/dashboards/${dashboardId}`, {
+            method: "DELETE",
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            location.reload(); // Reload to show updated list
+          } else {
+            throw new Error(result.error || "Failed to delete dashboard");
+          }
+        } catch (error) {
+          console.error("Error deleting dashboard:", error);
+          alert(`Error deleting dashboard: ${error.message}`);
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar .nav-link {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .sidebar .nav-link.active {
+    color: #0d6efd;
+  }
+
+  .dashboard-card {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+</style>

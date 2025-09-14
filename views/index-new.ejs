@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/css/modern.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <%- include('partials/navbar', { currentPage: 'home' }) -%>
+
+      <div class="main-layout">
+        <%- include('partials/sidebar') -%>
+
+        <main class="main-content">
+          <!-- Page Header -->
+          <div class="mb-8">
+            <h1 class="mb-2">Data Analytics Dashboard</h1>
+            <p class="text-gray-600">
+              Upload your data files and generate insights with AI-powered
+              analytics
+            </p>
+          </div>
+
+          <!-- Upload Section -->
+          <div class="card mb-6" id="upload-section" style="display: none">
+            <div class="card-header">
+              <h3 class="card-title">Upload Data Files</h3>
+            </div>
+            <div class="card-body">
+              <form
+                action="/app/upload"
+                method="POST"
+                enctype="multipart/form-data"
+                id="upload-form"
+              >
+                <div class="file-upload">
+                  <input
+                    type="file"
+                    name="dataFile"
+                    id="file-input"
+                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    required
+                  />
+                  <label for="file-input" class="file-upload-label">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <div>
+                      <div class="font-semibold">
+                        Click to upload or drag and drop
+                      </div>
+                      <div class="text-sm">CSV, XLSX files up to 10MB</div>
+                    </div>
+                  </label>
+                </div>
+                <div class="flex gap-3 mt-4">
+                  <button type="submit" class="btn btn-primary">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Upload File
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="hideUploadSection()"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Files Section -->
+          <div class="card mb-6" id="files-section-card">
+            <div class="card-header">
+              <div class="flex items-center justify-between">
+                <h3 class="card-title">Your Files</h3>
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="showUploadSection()"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Upload New
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="files-container">
+                <% if(files && files.length > 0) { %>
+                <ul class="file-list">
+                  <% files.forEach(file => { %>
+                  <li class="file-item" data-file-id="<%= file._id %>">
+                    <div class="file-info">
+                      <div class="file-icon">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </div>
+                      <div class="file-details">
+                        <h4><%= file.originalName %></h4>
+                        <p>
+                          Uploaded <%= new
+                          Date(file.uploadDate).toLocaleDateString() %>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="file-actions">
+                      <button
+                        class="btn btn-ghost btn-sm preview-btn"
+                        title="Preview"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="btn btn-primary btn-sm select-btn"
+                        title="Select for Analysis"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="btn btn-ghost btn-sm delete-file-btn"
+                        title="Delete"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </li>
+                  <% }) %>
+                </ul>
+                <% } else { %>
+                <div class="empty-state">
+                  <div class="empty-state-icon">
+                    <svg
+                      width="64"
+                      height="64"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                  <h3>No files uploaded yet</h3>
+                  <p>Upload your first data file to start analyzing</p>
+                  <button class="btn btn-primary" onclick="showUploadSection()">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Upload File
+                  </button>
+                </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Section -->
+          <div class="card mb-6" id="chat-section" style="display: none">
+            <div class="card-header">
+              <div class="flex items-center justify-between">
+                <h3 class="card-title">AI Data Analysis</h3>
+                <div class="flex items-center gap-3">
+                  <select
+                    id="dashboard-select"
+                    class="form-control"
+                    style="width: auto"
+                  >
+                    <option value="">Select Dashboard</option>
+                    <% if(dashboards && dashboards.length > 0) { %> <%
+                    dashboards.forEach(dashboard => { %>
+                    <option value="<%= dashboard._id %>">
+                      <%= dashboard.name %>
+                    </option>
+                    <% }) %> <% } %>
+                  </select>
+                  <button
+                    class="btn btn-outline btn-sm"
+                    onclick="hideChatSection()"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                  <div class="message assistant">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-content">
+                      Hello! I'm your AI data analyst. Ask me anything about
+                      your data - I can create charts, tables, and provide
+                      insights.
+                    </div>
+                  </div>
+                </div>
+                <div class="chat-input">
+                  <input
+                    type="text"
+                    id="chat-input"
+                    placeholder="Ask about your data..."
+                    class="flex-1"
+                  />
+                  <button class="btn btn-primary" id="send-btn">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Section -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Your Dashboards</h3>
+            </div>
+            <div class="card-body">
+              <div class="dashboard-grid" id="dashboards-grid">
+                <% if(dashboards && dashboards.length > 0) { %> <%
+                dashboards.forEach(dashboard => { %>
+                <div
+                  class="dashboard-card"
+                  onclick="window.location.href='/app/dashboard/<%= dashboard._id %>'"
+                >
+                  <h3><%= dashboard.name %></h3>
+                  <p>
+                    <%= dashboard.description || 'No description available' %>
+                  </p>
+                  <div class="dashboard-meta">
+                    <span
+                      >Updated <%= new
+                      Date(dashboard.updatedAt).toLocaleDateString() %></span
+                    >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <% }) %> <% } else { %>
+                <div class="empty-state">
+                  <div class="empty-state-icon">
+                    <svg
+                      width="64"
+                      height="64"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                  <h3>No dashboards yet</h3>
+                  <p>
+                    Create your first dashboard to organize your data
+                    visualizations
+                  </p>
+                  <button
+                    class="btn btn-primary"
+                    onclick="showCreateDashboardModal()"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    Create Dashboard
+                  </button>
+                </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Create Dashboard Modal -->
+    <div class="modal fade" id="createDashboardModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Create New Dashboard</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="createDashboardForm">
+              <div class="form-group">
+                <label class="form-label">Dashboard Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="dashboardName"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description (Optional)</label>
+                <textarea
+                  class="form-control"
+                  id="dashboardDescription"
+                  rows="3"
+                ></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="createDashboardBtn"
+            >
+              Create Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">File Preview</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="preview-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Global variables
+      let selectedFileId = null;
+      let selectedDashboardId = null;
+      let currentPage = 1;
+      const itemsPerPage = 10;
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", function () {
+        initializeEventListeners();
+        loadDashboardWidgets();
+      });
+
+      function initializeEventListeners() {
+        // File actions
+        document.addEventListener("click", handleFileActions);
+
+        // Chat functionality
+        document
+          .getElementById("send-btn")
+          .addEventListener("click", sendMessage);
+        document
+          .getElementById("chat-input")
+          .addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendMessage();
+          });
+
+        // Dashboard creation
+        document
+          .getElementById("createDashboardBtn")
+          .addEventListener("click", createDashboard);
+        document
+          .getElementById("dashboard-select")
+          .addEventListener("change", function () {
+            selectedDashboardId = this.value;
+          });
+
+        // Sidebar navigation
+        document
+          .getElementById("upload-trigger")
+          .addEventListener("click", showUploadSection);
+        document
+          .getElementById("files-section")
+          .addEventListener("click", function () {
+            document
+              .getElementById("files-section-card")
+              .scrollIntoView({ behavior: "smooth" });
+          });
+        document
+          .getElementById("create-dashboard-trigger")
+          .addEventListener("click", showCreateDashboardModal);
+        document
+          .getElementById("dashboard-selector")
+          .addEventListener("click", function () {
+            document
+              .getElementById("dashboards-grid")
+              .scrollIntoView({ behavior: "smooth" });
+          });
+      }
+
+      function handleFileActions(e) {
+        const target = e.target.closest("button");
+        if (!target) return;
+
+        const fileItem = target.closest(".file-item");
+        const fileId = fileItem.dataset.fileId;
+
+        if (target.classList.contains("preview-btn")) {
+          previewFile(fileId);
+        } else if (target.classList.contains("select-btn")) {
+          selectFile(fileId, fileItem);
+        } else if (target.classList.contains("delete-file-btn")) {
+          deleteFile(fileId, fileItem);
+        }
+      }
+
+      function selectFile(fileId, fileItem) {
+        // Remove previous selection
+        document.querySelectorAll(".file-item").forEach((item) => {
+          item.classList.remove("selected");
+        });
+
+        // Select current file
+        fileItem.classList.add("selected");
+        selectedFileId = fileId;
+
+        // Show chat section
+        document.getElementById("chat-section").style.display = "block";
+        document
+          .getElementById("chat-section")
+          .scrollIntoView({ behavior: "smooth" });
+
+        // Update chat input placeholder
+        const fileName = fileItem.querySelector("h4").textContent;
+        document.getElementById(
+          "chat-input"
+        ).placeholder = `Ask about ${fileName}...`;
+      }
+
+      function previewFile(fileId) {
+        fetch(`/app/preview/${fileId}?page=1`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.data && Array.isArray(data.data)) {
+              // Generate HTML table from the JSON data
+              let html = '<div class="table-responsive">';
+              html += '<table class="table table-striped table-hover">';
+
+              if (data.data.length > 0) {
+                // Get headers from the first row
+                const headers = Object.keys(data.data[0]);
+                html += '<thead class="table-dark"><tr>';
+                headers.forEach((header) => {
+                  html += `<th>${header}</th>`;
+                });
+                html += "</tr></thead>";
+
+                // Add data rows
+                html += "<tbody>";
+                data.data.forEach((row) => {
+                  html += "<tr>";
+                  headers.forEach((header) => {
+                    html += `<td>${row[header] || ""}</td>`;
+                  });
+                  html += "</tr>";
+                });
+                html += "</tbody>";
+              } else {
+                html +=
+                  '<tbody><tr><td colspan="100%" class="text-center">No data available</td></tr></tbody>';
+              }
+
+              html += "</table>";
+              html += "</div>";
+
+              // Add pagination info if available
+              if (data.totalPages > 1) {
+                html += `<div class="mt-3 text-center">
+                  <small class="text-muted">
+                    Showing page ${data.currentPage} of ${data.totalPages} 
+                    (${data.totalRows} total rows)
+                  </small>
+                </div>`;
+              }
+
+              document.getElementById("preview-content").innerHTML = html;
+              new bootstrap.Modal(
+                document.getElementById("previewModal")
+              ).show();
+            } else {
+              alert("Error loading preview: No data available");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error loading preview");
+          });
+      }
+
+      async function deleteFile(fileId, fileItem) {
+        if (
+          !confirm(
+            "Are you sure you want to delete this file? This action cannot be undone."
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/app/file/${fileId}`, {
+            method: "DELETE",
+          });
+          const result = await response.json();
+
+          if (response.ok) {
+            fileItem.remove();
+            if (selectedFileId === fileId) {
+              selectedFileId = null;
+              document.getElementById("chat-section").style.display = "none";
+            }
+            showSuccess("File deleted successfully");
+          } else {
+            throw new Error(result.error || "Failed to delete file");
+          }
+        } catch (error) {
+          console.error("Error deleting file:", error);
+          showError(`Error deleting file: ${error.message}`);
+        }
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("chat-input");
+        const message = input.value.trim();
+
+        if (!message || !selectedFileId) return;
+
+        // Add user message
+        addMessage("user", message);
+        input.value = "";
+
+        // Show loading
+        const loadingId = addMessage(
+          "assistant",
+          "Analyzing your data...",
+          true
+        );
+
+        try {
+          const response = await fetch("/app/generate-insight", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              prompt: message,
+              fileId: selectedFileId,
+            }),
+          });
+
+          const result = await response.json();
+
+          // Remove loading message
+          document.getElementById(loadingId).remove();
+
+          if (response.ok) {
+            // Add AI response - handle different response formats
+            let responseText = "";
+            if (result.message) {
+              responseText = result.message;
+            } else if (result.type === "error") {
+              responseText = result.message || "An error occurred";
+            } else {
+              // For chart/table responses, show a summary
+              if (result.type === "chart") {
+                responseText = `Generated a ${
+                  result.chartType || "chart"
+                } visualization. You can add it to your dashboard using the dropdown above.`;
+              } else if (result.type === "table") {
+                responseText = `Generated a table with ${
+                  result.data?.rows?.length || 0
+                } rows. You can add it to your dashboard using the dropdown above.`;
+              } else {
+                responseText = "Analysis complete. Check the result above.";
+              }
+            }
+
+            addMessage("assistant", responseText);
+
+            // Render the chart/table in chat if available
+            if (result.type === "chart" && result.config) {
+              renderChartInChat(result);
+              showAddToDashboardButton(result);
+            } else if (result.type === "table" && result.data) {
+              renderTableInChat(result);
+              showAddToDashboardButton(result);
+            }
+
+            // If there's a widget and dashboard is pre-selected, auto-add it
+            if (
+              result.type &&
+              selectedDashboardId &&
+              (result.type === "chart" || result.type === "table")
+            ) {
+              addWidgetToDashboard(result);
+            }
+          } else {
+            addMessage(
+              "assistant",
+              `Error: ${result.error || "Something went wrong"}`
+            );
+          }
+        } catch (error) {
+          document.getElementById(loadingId).remove();
+          addMessage("assistant", `Error: ${error.message}`);
+        }
+      }
+
+      function addMessage(sender, content, isLoading = false) {
+        const messagesContainer = document.getElementById("chat-messages");
+        const messageId = "msg-" + Date.now();
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+        messageDiv.id = messageId;
+
+        const avatar = document.createElement("div");
+        avatar.className = "message-avatar";
+        avatar.textContent = sender === "user" ? "U" : "AI";
+
+        const messageContent = document.createElement("div");
+        messageContent.className = "message-content";
+        messageContent.innerHTML = content;
+
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(messageContent);
+        messagesContainer.appendChild(messageDiv);
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        return messageId;
+      }
+
+      async function addWidgetToDashboard(widgetData) {
+        if (!selectedDashboardId) {
+          showError("Please select a dashboard first");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/widgets", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ...widgetData,
+              dashboardId: selectedDashboardId,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showSuccess("Widget added to dashboard successfully!");
+          } else {
+            throw new Error(result.error || "Failed to add widget");
+          }
+        } catch (error) {
+          console.error("Error adding widget:", error);
+          showError(`Error adding widget: ${error.message}`);
+        }
+      }
+
+      async function createDashboard() {
+        const name = document.getElementById("dashboardName").value.trim();
+        const description = document
+          .getElementById("dashboardDescription")
+          .value.trim();
+
+        if (!name) {
+          showError("Please enter a dashboard name");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/dashboards", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, description }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            // Add to dashboard select dropdown
+            const select = document.getElementById("dashboard-select");
+            const option = document.createElement("option");
+            option.value = result._id;
+            option.textContent = result.name;
+            select.appendChild(option);
+            select.value = result._id;
+            selectedDashboardId = result._id;
+
+            // Close modal and reset form
+            bootstrap.Modal.getInstance(
+              document.getElementById("createDashboardModal")
+            ).hide();
+            document.getElementById("createDashboardForm").reset();
+
+            showSuccess(`Dashboard "${result.name}" created successfully!`);
+
+            // Reload page to show new dashboard
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            throw new Error(result.error || "Failed to create dashboard");
+          }
+        } catch (error) {
+          console.error("Error creating dashboard:", error);
+          showError(`Error creating dashboard: ${error.message}`);
+        }
+      }
+
+      function loadDashboardWidgets() {
+        // This function can be used to load any saved widgets if needed
+        // For now, we're not showing widgets on the main page
+      }
+
+      // UI Helper Functions
+      function showUploadSection() {
+        document.getElementById("upload-section").style.display = "block";
+        document
+          .getElementById("upload-section")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      function hideUploadSection() {
+        document.getElementById("upload-section").style.display = "none";
+      }
+
+      function hideChatSection() {
+        document.getElementById("chat-section").style.display = "none";
+        selectedFileId = null;
+        document.querySelectorAll(".file-item").forEach((item) => {
+          item.classList.remove("selected");
+        });
+      }
+
+      function showCreateDashboardModal() {
+        new bootstrap.Modal(
+          document.getElementById("createDashboardModal")
+        ).show();
+      }
+
+      function showSuccess(message) {
+        // Create a simple toast notification
+        const toast = document.createElement("div");
+        toast.className = "alert alert-success position-fixed";
+        toast.style.cssText =
+          "top: 20px; right: 20px; z-index: 9999; min-width: 300px;";
+        toast.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <span>${message}</span>
+            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+          </div>
+        `;
+        document.body.appendChild(toast);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          if (toast.parentElement) {
+            toast.remove();
+          }
+        }, 5000);
+      }
+
+      function showError(message) {
+        // Create a simple toast notification
+        const toast = document.createElement("div");
+        toast.className = "alert alert-danger position-fixed";
+        toast.style.cssText =
+          "top: 20px; right: 20px; z-index: 9999; min-width: 300px;";
+        toast.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <span>${message}</span>
+            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+          </div>
+        `;
+        document.body.appendChild(toast);
+
+        // Auto-remove after 7 seconds
+        setTimeout(() => {
+          if (toast.parentElement) {
+            toast.remove();
+          }
+        }, 7000);
+      }
+
+      function renderChartInChat(chartData) {
+        const messagesContainer = document.getElementById("chat-messages");
+        const chartContainer = document.createElement("div");
+        chartContainer.className = "message assistant chart-message";
+        chartContainer.style.marginTop = "10px";
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 400;
+        canvas.height = 300;
+        canvas.style.maxWidth = "100%";
+        canvas.style.height = "auto";
+
+        chartContainer.appendChild(canvas);
+        messagesContainer.appendChild(chartContainer);
+
+        try {
+          new Chart(canvas.getContext("2d"), chartData.config);
+        } catch (error) {
+          console.error("Error rendering chart:", error);
+          chartContainer.innerHTML =
+            '<p class="text-gray-500">Error rendering chart</p>';
+        }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function renderTableInChat(tableData) {
+        const messagesContainer = document.getElementById("chat-messages");
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "message assistant table-message";
+        tableContainer.style.marginTop = "10px";
+
+        if (tableData.data && tableData.data.headers && tableData.data.rows) {
+          let tableHtml =
+            '<div class="table-responsive"><table class="table table-sm">';
+
+          // Header
+          tableHtml += "<thead><tr>";
+          tableData.data.headers.forEach((header) => {
+            tableHtml += `<th>${header}</th>`;
+          });
+          tableHtml += "</tr></thead>";
+
+          // Body
+          tableHtml += "<tbody>";
+          tableData.data.rows.forEach((row) => {
+            tableHtml += "<tr>";
+            row.forEach((cell) => {
+              tableHtml += `<td>${cell}</td>`;
+            });
+            tableHtml += "</tr>";
+          });
+          tableHtml += "</tbody></table></div>";
+
+          tableContainer.innerHTML = tableHtml;
+        } else {
+          tableContainer.innerHTML =
+            '<p class="text-gray-500">No table data available</p>';
+        }
+
+        messagesContainer.appendChild(tableContainer);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function showAddToDashboardButton(widgetData) {
+        const messagesContainer = document.getElementById("chat-messages");
+        const buttonContainer = document.createElement("div");
+        buttonContainer.className = "message assistant add-dashboard-message";
+        buttonContainer.style.marginTop = "10px";
+
+        let buttonsHtml = '<div class="d-flex gap-2 align-items-center">';
+        buttonsHtml +=
+          '<span class="text-sm text-gray-600">Add to dashboard:</span>';
+
+        // Get available dashboards
+        const dashboardSelect = document.getElementById("dashboard-select");
+        const dashboards = Array.from(dashboardSelect.options).slice(1); // Skip "Select Dashboard" option
+
+        if (dashboards.length > 0) {
+          dashboards.forEach((option) => {
+            buttonsHtml += `<button class="btn btn-outline-primary btn-sm add-to-dashboard-btn" 
+                              data-dashboard-id="${option.value}" 
+                              data-widget-data='${JSON.stringify(widgetData)}'>
+                              ${option.text}
+                            </button>`;
+          });
+        } else {
+          buttonsHtml +=
+            '<span class="text-sm text-gray-500">No dashboards available</span>';
+        }
+
+        buttonsHtml += "</div>";
+        buttonContainer.innerHTML = buttonsHtml;
+
+        // Add event listeners for the buttons
+        buttonContainer.addEventListener("click", (e) => {
+          if (e.target.classList.contains("add-to-dashboard-btn")) {
+            const dashboardId = e.target.dataset.dashboardId;
+            const widgetDataStr = e.target.dataset.widgetData;
+            const parsedWidgetData = JSON.parse(widgetDataStr);
+
+            // Add to specific dashboard
+            addWidgetToSpecificDashboard(parsedWidgetData, dashboardId);
+
+            // Remove the button container after adding
+            buttonContainer.remove();
+          }
+        });
+
+        messagesContainer.appendChild(buttonContainer);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      async function addWidgetToSpecificDashboard(widgetData, dashboardId) {
+        try {
+          const response = await fetch("/api/widgets", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ...widgetData,
+              dashboardId: dashboardId,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showSuccess("Widget added to dashboard successfully!");
+          } else {
+            throw new Error(result.error || "Failed to add widget");
+          }
+        } catch (error) {
+          console.error("Error adding widget:", error);
+          showError(`Error adding widget: ${error.message}`);
+        }
+      }
+    </script>
+  </body>
+</html>
