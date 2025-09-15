@@ -258,12 +258,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (widget.type === "chart") {
         return `<canvas></canvas>`;
       } else if (widget.type === "table") {
+        console.log("Generating table for widget:", widget);
+        if (!widget.data) {
+          return "<p>No table data available.</p>";
+        }
         return generateTable(widget.data, false);
       }
       return "<p>Unsupported widget type.</p>";
     } catch (error) {
       console.error("Error generating widget content:", error);
-      return "<p>Error generating widget content.</p>";
+      return `<p>Error generating widget content: ${error.message}</p>`;
     }
   }
 
@@ -281,6 +285,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generateTable(data, isPreview) {
+    console.log("generateTable called with:", data, "isPreview:", isPreview);
+    
     // Handle undefined or null data
     if (!data) {
       return "<p>No data available to display.</p>";
@@ -305,14 +311,27 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (data.headers && data.rows) {
         headers = data.headers;
         rows = data.rows;
+      } else if (Array.isArray(data) && data.length > 0) {
+        // Handle case where data is directly an array
+        if (Array.isArray(data[0])) {
+          headers = data[0];
+          rows = data.slice(1);
+        } else {
+          headers = Object.keys(data[0] || {});
+          rows = data;
+        }
       } else {
-        return "<p>Invalid table data structure.</p>";
+        console.error("Invalid table data structure:", data);
+        return "<p>Invalid table data structure. Expected format: {headers: [], rows: []} or array of objects.</p>";
       }
     }
 
     if (!headers || !rows || headers.length === 0 || rows.length === 0) {
+      console.error("No valid headers or rows found:", { headers, rows });
       return "<p>No data to display.</p>";
     }
+
+    console.log("Table data:", { headers, rows });
 
     let table =
       '<div class="table-responsive"><table class="table table-striped table-hover"><thead><tr>';
@@ -325,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
           ? row
           : headers.map((h) => row[h] || "")
         : row;
-      rowData.forEach((cell) => (table += `<td>${cell}</td>`));
+      rowData.forEach((cell) => (table += `<td>${cell || ''}</td>`));
       table += "</tr>";
     });
     table += "</tbody></table></div>";

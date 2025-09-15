@@ -360,9 +360,23 @@ function calculateMarketingAnalytics(
 }
 
 // Get marketing insights using AI
+// Cache for insights to improve performance
+const insightsCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const getMarketingInsights = async (req, res) => {
   try {
     const userId = req.user.id;
+    const cacheKey = `insights_${userId}`;
+    
+    // Check cache first
+    if (insightsCache.has(cacheKey)) {
+      const cached = insightsCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < CACHE_DURATION) {
+        return res.json(cached.data);
+      }
+    }
+    
     const analytics = await calculateMarketingAnalytics(
       await MarketingCampaign.find({ user: userId }),
       await BusinessMetrics.find({ user: userId })
@@ -371,7 +385,15 @@ const getMarketingInsights = async (req, res) => {
     // Generate insights based on the analytics
     const insights = generateMarketingInsights(analytics);
 
-    res.json({ insights, analytics });
+    const result = { insights, analytics };
+    
+    // Cache the result
+    insightsCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+
+    res.json(result);
   } catch (err) {
     console.error("Error getting marketing insights:", err);
     res.status(500).json({ error: "Failed to get marketing insights." });
@@ -637,12 +659,12 @@ const uploadCustomData = async (req, res) => {
       }
 
       // Validate file sizes (max 10MB per file)
-      const maxFileSize = 10 * 1024 * 1024; // 10MB
+      const maxFileSize = 4 * 1024 * 1024; // 4MB (Vercel limit)
       const allFiles = [...campaignFiles, ...businessFiles];
       for (const file of allFiles) {
         if (file.size > maxFileSize) {
           return res.status(400).json({
-            error: `File ${file.originalname} is too large. Maximum size is 10MB.`,
+            error: `File ${file.originalname} is too large. Maximum size is 4MB for production.`,
           });
         }
       }
@@ -665,7 +687,7 @@ const uploadCustomData = async (req, res) => {
         console.log(`Parsed ${data.length} rows from ${file.originalname}`);
 
         // Process in smaller batches to prevent memory issues
-        const batchSize = 100;
+        const batchSize = 50; // Reduced for Vercel performance
         const totalBatches = Math.ceil(data.length / batchSize);
 
         for (let i = 0; i < data.length; i += batchSize) {
@@ -718,6 +740,10 @@ const uploadCustomData = async (req, res) => {
       console.log(
         `Upload completed: ${processedCampaigns} campaigns, ${processedBusinessMetrics} business metrics`
       );
+
+      // Clear cache for this user since data has changed
+      const cacheKey = `insights_${req.user.id}`;
+      insightsCache.delete(cacheKey);
 
       res.json({
         message: "Custom data uploaded successfully",
@@ -1077,6 +1103,10 @@ const clearMarketingData = async (req, res) => {
 
     const campaignResult = await MarketingCampaign.deleteMany({ user: userId });
     const businessResult = await BusinessMetrics.deleteMany({ user: userId });
+
+    // Clear cache for this user
+    const cacheKey = `insights_${userId}`;
+    insightsCache.delete(cacheKey);
 
     res.json({
       message: "Data cleared successfully",
