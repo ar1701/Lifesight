@@ -1536,17 +1536,69 @@ p {
   }
 }
 
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mobile-menu-btn:hover {
+  background: var(--gray-100);
+  color: var(--gray-900);
+}
+
 @media (max-width: 768px) {
   .navbar-container {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
     gap: var(--space-2);
   }
 
+  .mobile-menu-btn {
+    display: block;
+  }
+
   .navbar-redesigned .navbar-nav {
-    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    flex-direction: column;
+    padding: var(--space-4);
+    gap: var(--space-2);
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 999;
+  }
+
+  .navbar-redesigned .navbar-nav.mobile-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .navbar-redesigned .nav-link {
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
   }
 
   .brand-text {
+    display: none;
+  }
+
+  .progress-indicator {
     display: none;
   }
 }

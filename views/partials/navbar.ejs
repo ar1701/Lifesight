@@ -42,8 +42,15 @@
       </div>
     </div>
 
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
     <!-- Navigation Links -->
-    <div class="navbar-nav">
+    <div class="navbar-nav" id="navbarNav">
       <a
         href="/app"
         class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'home' ? 'active' : '' %>"
@@ -194,6 +201,17 @@
   function toggleHelpPanel() {
     const panel = document.getElementById("helpPanel");
     panel.style.display = panel.style.display === "none" ? "block" : "none";
+  }
+
+  function toggleMobileMenu() {
+    const nav = document.getElementById("navbarNav");
+    const isOpen = nav.classList.contains("mobile-open");
+    
+    if (isOpen) {
+      nav.classList.remove("mobile-open");
+    } else {
+      nav.classList.add("mobile-open");
+    }
   }
 
   function startTour() {

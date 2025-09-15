@@ -695,8 +695,8 @@ const uploadCustomData = async (req, res) => {
         const data = await parseFileData(file);
         console.log(`Parsed ${data.length} rows from ${file.originalname}`);
 
-        // Process in smaller batches to prevent memory issues
-        const batchSize = 50; // Reduced for Vercel performance
+        // Process in optimized batches for better performance
+        const batchSize = 200; // Increased for better performance
         const totalBatches = Math.ceil(data.length / batchSize);
 
         for (let i = 0; i < data.length; i += batchSize) {
@@ -707,7 +707,8 @@ const uploadCustomData = async (req, res) => {
             `Processing batch ${currentBatch}/${totalBatches} (${batch.length} records)`
           );
 
-          await processCampaignData(batch, userId);
+          // Use bulk insert for better performance
+          await processCampaignDataBulk(batch, userId);
 
           // Store progress for frontend polling
           const progress = Math.round((currentBatch / totalBatches) * 100);
@@ -741,7 +742,7 @@ const uploadCustomData = async (req, res) => {
         console.log(`Processing business file: ${file.originalname}`);
         const data = await parseFileData(file);
         console.log(`Parsed ${data.length} rows from ${file.originalname}`);
-        await processBusinessData(data, userId);
+        await processBusinessDataBulk(data, userId);
         processedBusinessMetrics += data.length;
         console.log(`Successfully processed ${data.length} business records`);
       }
@@ -898,6 +899,76 @@ async function processCampaignData(data, userId) {
   }
 }
 
+// Optimized bulk processing function
+async function processCampaignDataBulk(data, userId) {
+  const campaigns = [];
+  const errors = [];
+
+  // Process all rows first
+  for (const row of data) {
+    try {
+      const normalizedRow = normalizeColumnNames(row);
+
+      const requiredFields = [
+        "campaign_name",
+        "platform",
+        "date",
+        "spend",
+        "impressions",
+        "clicks",
+        "attributed_revenue",
+      ];
+
+      // Validate required fields
+      const missingFields = requiredFields.filter(
+        (field) => !normalizedRow[field]
+      );
+      if (missingFields.length > 0) {
+        errors.push(`Missing required fields: ${missingFields.join(", ")}`);
+        continue;
+      }
+
+      // Validate platform
+      const validPlatforms = ["Facebook", "Google", "TikTok"];
+      if (!validPlatforms.includes(normalizedRow.platform)) {
+        errors.push(`Invalid platform: ${normalizedRow.platform}`);
+        continue;
+      }
+
+      // Create campaign record
+      campaigns.push({
+        user: userId,
+        campaign: normalizedRow.campaign_name,
+        platform: normalizedRow.platform,
+        tactic: normalizedRow.tactic || "Unknown",
+        state: normalizedRow.state || "Unknown",
+        date: new Date(normalizedRow.date),
+        spend: parseFloat(normalizedRow.spend) || 0,
+        impressions: parseInt(normalizedRow.impressions) || 0,
+        clicks: parseInt(normalizedRow.clicks) || 0,
+        attributedRevenue: parseFloat(normalizedRow.attributed_revenue) || 0,
+      });
+    } catch (error) {
+      errors.push(`Error processing row: ${error.message}`);
+    }
+  }
+
+  // Bulk insert all valid records at once
+  if (campaigns.length > 0) {
+    try {
+      await MarketingCampaign.insertMany(campaigns, { ordered: false });
+      console.log(`Bulk saved ${campaigns.length} campaign records`);
+    } catch (error) {
+      console.error("Error bulk saving campaigns:", error);
+      throw error;
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn(`Encountered ${errors.length} errors during processing:`, errors.slice(0, 5));
+  }
+}
+
 // Helper function to normalize column names for different data formats
 function normalizeColumnNames(row) {
   const normalized = {};
@@ -1008,6 +1079,63 @@ async function processBusinessData(data, userId) {
     });
 
     await businessMetric.save();
+  }
+}
+
+// Optimized bulk processing function for business data
+async function processBusinessDataBulk(data, userId) {
+  const businessMetrics = [];
+  const errors = [];
+
+  // Process all rows first
+  for (const row of data) {
+    try {
+      const normalizedRow = normalizeBusinessColumnNames(row);
+
+      const requiredFields = [
+        "date",
+        "total_revenue",
+        "total_orders",
+        "new_customers",
+        "cogs",
+      ];
+
+      // Validate required fields
+      const missingFields = requiredFields.filter(
+        (field) => !normalizedRow[field]
+      );
+      if (missingFields.length > 0) {
+        errors.push(`Missing required fields: ${missingFields.join(", ")}`);
+        continue;
+      }
+
+      // Create business metrics record
+      businessMetrics.push({
+        user: userId,
+        date: new Date(normalizedRow.date),
+        total_revenue: parseFloat(normalizedRow.total_revenue) || 0,
+        total_orders: parseInt(normalizedRow.total_orders) || 0,
+        new_customers: parseInt(normalizedRow.new_customers) || 0,
+        cogs: parseFloat(normalizedRow.cogs) || 0,
+      });
+    } catch (error) {
+      errors.push(`Error processing row: ${error.message}`);
+    }
+  }
+
+  // Bulk insert all valid records at once
+  if (businessMetrics.length > 0) {
+    try {
+      await BusinessMetrics.insertMany(businessMetrics, { ordered: false });
+      console.log(`Bulk saved ${businessMetrics.length} business records`);
+    } catch (error) {
+      console.error("Error bulk saving business metrics:", error);
+      throw error;
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn(`Encountered ${errors.length} errors during business data processing:`, errors.slice(0, 5));
   }
 }
 
