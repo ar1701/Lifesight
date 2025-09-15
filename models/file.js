@@ -12,7 +12,15 @@ const fileSchema = new mongoose.Schema({
     },
     filePath: {
         type: String,
-        required: true
+        required: false // Made optional for memory storage
+    },
+    fileData: {
+        type: Buffer,
+        required: false // For memory storage in production
+    },
+    mimetype: {
+        type: String,
+        required: false
     },
     uploadDate: {
         type: Date,

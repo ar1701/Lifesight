@@ -86,8 +86,12 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // For regular page requests, send HTML
-  res.status(500).send("Something broke!");
+  // For regular page requests, send a proper error page
+  res.status(500).render('error', {
+    title: 'Error',
+    message: 'Something went wrong. Please try again.',
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
 });
 
 const PORT = process.env.PORT || 3000;

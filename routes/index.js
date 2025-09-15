@@ -7,21 +7,15 @@ const rateLimiter = require("../middleware/rateLimiter");
 
 const { ensureAuthenticated } = require("../config/auth");
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-    );
-  },
-});
+// Multer storage configuration - use memory storage for Vercel
+const storage = multer.memoryStorage();
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 4 * 1024 * 1024, // 4MB limit for Vercel
+  }
+});
 
 // All routes in this file are protected
 router.use(ensureAuthenticated);

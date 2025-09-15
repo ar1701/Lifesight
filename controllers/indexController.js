@@ -56,12 +56,23 @@ const uploadFile = (req, res) => {
     return res.status(400).send("No file uploaded.");
   }
 
-  const newFile = new File({
+  // Handle both disk storage (development) and memory storage (production)
+  const fileData = {
     originalName: req.file.originalname,
-    storageName: req.file.filename,
-    filePath: req.file.path,
+    storageName: req.file.filename || `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
     user: req.user.id,
-  });
+    mimetype: req.file.mimetype,
+  };
+
+  // If file is stored in memory (production), save the buffer
+  if (req.file.buffer) {
+    fileData.fileData = req.file.buffer;
+  } else {
+    // If file is stored on disk (development), save the path
+    fileData.filePath = req.file.path;
+  }
+
+  const newFile = new File(fileData);
 
   newFile
     .save()
@@ -89,7 +100,6 @@ const previewFile = async (req, res) => {
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
 
-    const filePath = path.join(__dirname, "..", file.filePath);
     const fileExt = path.extname(file.originalName).toLowerCase();
     let allData = [];
 
@@ -108,16 +118,47 @@ const previewFile = async (req, res) => {
     };
 
     if (fileExt === ".csv") {
-      fs.createReadStream(filePath)
-        .pipe(csv())
-        .on("data", (data) => allData.push(data))
-        .on("end", processData);
+      // Handle both disk storage and memory storage
+      if (file.fileData) {
+        // Memory storage (production)
+        const csvString = file.fileData.toString('utf8');
+        const lines = csvString.split('\n');
+        const headers = lines[0].split(',');
+        allData = lines.slice(1).map(line => {
+          const values = line.split(',');
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header.trim()] = values[index] ? values[index].trim() : '';
+          });
+          return obj;
+        }).filter(row => Object.values(row).some(val => val !== ''));
+        processData();
+      } else {
+        // Disk storage (development)
+        const filePath = path.join(__dirname, "..", file.filePath);
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on("data", (data) => allData.push(data))
+          .on("end", processData);
+      }
     } else if (fileExt === ".xlsx" || fileExt === ".xls") {
-      const workbook = xlsx.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      allData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
-      processData();
+      // Handle both disk storage and memory storage
+      if (file.fileData) {
+        // Memory storage (production)
+        const workbook = xlsx.read(file.fileData);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        allData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+        processData();
+      } else {
+        // Disk storage (development)
+        const filePath = path.join(__dirname, "..", file.filePath);
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        allData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+        processData();
+      }
     } else {
       res.status(400).json({ error: "Unsupported file type for preview." });
     }
@@ -142,17 +183,32 @@ const generateInsight = async (req, res) => {
       });
     }
 
-    const filePath = path.join(__dirname, "..", file.filePath);
     const fileExt = path.extname(file.originalName).toLowerCase();
-
     let fileContent = "";
 
     // Handle different file types
     if (fileExt === ".csv") {
-      fileContent = fs.readFileSync(filePath).toString();
+      // Handle both disk storage and memory storage
+      if (file.fileData) {
+        // Memory storage (production)
+        fileContent = file.fileData.toString('utf8');
+      } else {
+        // Disk storage (development)
+        const filePath = path.join(__dirname, "..", file.filePath);
+        fileContent = fs.readFileSync(filePath).toString();
+      }
     } else if (fileExt === ".xlsx" || fileExt === ".xls") {
-      // Process Excel file
-      const workbook = xlsx.readFile(filePath);
+      // Handle both disk storage and memory storage
+      let workbook;
+      if (file.fileData) {
+        // Memory storage (production)
+        workbook = xlsx.read(file.fileData);
+      } else {
+        // Disk storage (development)
+        const filePath = path.join(__dirname, "..", file.filePath);
+        workbook = xlsx.readFile(filePath);
+      }
+      
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
