@@ -172,16 +172,25 @@ function calculateMarketingAnalytics(
     businessMetrics: {},
   };
 
+  // Handle empty data
+  if (!campaigns || campaigns.length === 0) {
+    console.log("No campaigns data found, returning empty analytics");
+    return analytics;
+  }
+
   // Overall summary
-  const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
+  const totalSpend = campaigns.reduce((sum, c) => sum + (c.spend || 0), 0);
   const totalRevenue = campaigns.reduce(
-    (sum, c) => sum + c.attributedRevenue,
+    (sum, c) => sum + (c.attributedRevenue || 0),
     0
   );
-  const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
-  const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
-  const totalNewCustomers = businessMetrics.reduce(
-    (sum, b) => sum + b.newCustomers,
+  const totalImpressions = campaigns.reduce(
+    (sum, c) => sum + (c.impressions || 0),
+    0
+  );
+  const totalClicks = campaigns.reduce((sum, c) => sum + (c.clicks || 0), 0);
+  const totalNewCustomers = (businessMetrics || []).reduce(
+    (sum, b) => sum + (b.newCustomers || 0),
     0
   );
 
@@ -368,7 +377,7 @@ const getMarketingInsights = async (req, res) => {
   try {
     const userId = req.user.id;
     const cacheKey = `insights_${userId}`;
-    
+
     // Check cache first
     if (insightsCache.has(cacheKey)) {
       const cached = insightsCache.get(cacheKey);
@@ -376,7 +385,7 @@ const getMarketingInsights = async (req, res) => {
         return res.json(cached.data);
       }
     }
-    
+
     const analytics = await calculateMarketingAnalytics(
       await MarketingCampaign.find({ user: userId }),
       await BusinessMetrics.find({ user: userId })
@@ -386,11 +395,11 @@ const getMarketingInsights = async (req, res) => {
     const insights = generateMarketingInsights(analytics);
 
     const result = { insights, analytics };
-    
+
     // Cache the result
     insightsCache.set(cacheKey, {
       data: result,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     res.json(result);

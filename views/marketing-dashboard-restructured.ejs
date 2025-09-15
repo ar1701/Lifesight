@@ -1188,18 +1188,19 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
 
                   console.log("🔍 Database Debug Info:", debug);
 
-                  // If there's existing data, show a warning
+                  // If there's existing data, automatically show it and calculate metrics
                   if (debug.totalCampaigns > 0) {
                     const platforms = debug.campaignsByPlatform.map(p => p._id).join(", ");
-                    console.warn(`⚠️ Found existing data: ${debug.totalCampaigns} campaigns from platforms: ${platforms}`);
+                    console.log(`✅ Found existing data: ${debug.totalCampaigns} campaigns from platforms: ${platforms}`);
 
-                    // Show a notification to user
+                    // Show success notification
                     const notification = document.createElement('div');
-                    notification.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+                    notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
                     notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
                     notification.innerHTML = `
-                      <strong>⚠️ Existing Data Found</strong><br>
+                      <strong>✅ Data Loaded Successfully!</strong><br>
                       Found ${debug.totalCampaigns} campaigns from: ${platforms}<br>
+                      <small class="text-muted">Automatically generating insights...</small>
                       <div class="mt-2">
                         <button class="btn btn-sm btn-danger me-2" onclick="clearAllDataFromNotification()">
                           🗑️ Clear All Data
@@ -1212,19 +1213,274 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
                     `;
                     document.body.appendChild(notification);
 
-                    // Auto-hide after 10 seconds
+                    // Auto-hide after 8 seconds
                     setTimeout(() => {
                       if (notification.parentNode) {
                         notification.remove();
                       }
-                    }, 10000);
+                    }, 8000);
+
+                    // Automatically show the data and generate insights
+                    await loadExistingDataAndGenerateInsights();
                   }
                 } catch (error) {
                   console.error("Error getting debug info:", error);
                 }
               }
 
+              // New function to load existing data and generate insights
+              async function loadExistingDataAndGenerateInsights() {
+                try {
+                  // Show the uploaded data section with existing data
+                  await showExistingDataSection();
+                  
+                  // Show the metric selection section (Step 2)
+                  showMetricSelectionForExistingData();
+                  
+                  // Show success message
+                  showSuccessMessage("Existing data loaded! You can now select metrics and generate insights.");
+                  
+                } catch (error) {
+                  console.error("Error loading existing data:", error);
+                  showErrorMessage(`Error loading existing data: ${error.message}. Please try refreshing the page.`);
+                  
+                  // Still show the data section even if insights fail
+                  try {
+                    await showExistingDataSection();
+                  } catch (sectionError) {
+                    console.error("Error showing data section:", sectionError);
+                  }
+                }
+              }
 
+              // Function to show metric selection for existing data
+              function showMetricSelectionForExistingData() {
+                const metricSelectionSection = document.getElementById("metricSelectionSection");
+                if (metricSelectionSection) {
+                  metricSelectionSection.style.display = "block";
+                  
+                  // Enable the generate insights button
+                  const generateBtn = document.getElementById("generateSelectedInsights");
+                  if (generateBtn) {
+                    generateBtn.disabled = false;
+                  }
+                  
+                  // Scroll to the metric selection section
+                  metricSelectionSection.scrollIntoView({ behavior: "smooth" });
+                  
+                  // Add a note that data is already loaded
+                  const existingDataNote = document.createElement('div');
+                  existingDataNote.className = 'alert alert-success mb-3';
+                  existingDataNote.innerHTML = `
+                    <h6><i class="bi bi-check-circle me-2"></i>Data Ready for Analysis</h6>
+                    <p class="mb-0">Your marketing data is loaded and ready. Select the metrics you want to analyze below.</p>
+                  `;
+                  metricSelectionSection.insertBefore(existingDataNote, metricSelectionSection.firstChild);
+                }
+              }
+
+              // Function to show existing data section
+              async function showExistingDataSection() {
+                try {
+                  // Get debug info to show data summary
+                  const response = await fetch("/api/marketing/debug-data");
+                  const debug = await response.json();
+
+                  const dataSection = document.getElementById("dataUploadSection");
+                  const existingDataDiv = document.createElement('div');
+                  existingDataDiv.className = 'alert alert-info mt-3';
+
+                  const platforms = debug.campaignsByPlatform.map(p => `${p._id} (${p.count})`).join(", ");
+
+                  existingDataDiv.innerHTML = `
+                    <h6><i class="bi bi-check-circle me-2"></i>Existing Data Found</h6>
+                    <div class="row">
+                      <div class="col-md-8">
+                        <p class="mb-2">Your marketing data is already loaded and ready for analysis.</p>
+                        <div class="small text-muted">
+                          <strong>📊 Data Summary:</strong><br>
+                          • Total Campaigns: ${debug.totalCampaigns}<br>
+                          • Platforms: ${platforms}<br>
+                          • Business Metrics: ${debug.totalBusinessMetrics} records
+                        </div>
+                        <div class="mt-3">
+                          <h6 class="mb-2">📁 Uploaded Files:</h6>
+                          <div class="row g-2">
+                            ${debug.campaignsByPlatform.map(platform => `
+                              <div class="col-md-6">
+                                <div class="card border-success">
+                                  <div class="card-body p-2">
+                                    <div class="d-flex align-items-center">
+                                      <i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>
+                                      <div>
+                                        <small class="fw-bold">${platform._id} Campaign Data</small><br>
+                                        <small class="text-muted">${platform.count} records</small>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            `).join('')}
+                            ${debug.totalBusinessMetrics > 0 ? `
+                              <div class="col-md-6">
+                                <div class="card border-info">
+                                  <div class="card-body p-2">
+                                    <div class="d-flex align-items-center">
+                                      <i class="bi bi-graph-up text-info me-2"></i>
+                                      <div>
+                                        <small class="fw-bold">Business Metrics</small><br>
+                                        <small class="text-muted">${debug.totalBusinessMetrics} records</small>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ` : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-4 text-end">
+                        <div class="d-flex flex-column gap-2">
+                          <button class="btn btn-sm btn-outline-primary" onclick="showDebugInfo()">
+                            <i class="bi bi-eye me-1"></i>View Details
+                          </button>
+                          <button class="btn btn-sm btn-success" onclick="generateInsightsFromExistingData()">
+                            <i class="bi bi-graph-up me-1"></i>Select Metrics & Analyze
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" onclick="clearAllData()">
+                            <i class="bi bi-trash me-1"></i>Clear All Data
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                  dataSection.appendChild(existingDataDiv);
+                } catch (error) {
+                  console.error("Error showing existing data section:", error);
+                }
+              }
+
+              // Function to generate all available charts
+              async function generateAllAvailableCharts(analytics, insights) {
+                const insightsContainer = document.getElementById("dynamicInsightsContainer");
+                insightsContainer.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">Generating insights...</p></div>';
+
+                try {
+                  // Check if we have valid analytics data
+                  if (!analytics || !analytics.byPlatform || Object.keys(analytics.byPlatform).length === 0) {
+                    insightsContainer.innerHTML = `
+                      <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>No Analytics Data Available</h6>
+                        <p class="mb-0">The data exists but analytics could not be calculated. This might be due to missing required fields in your data.</p>
+                        <div class="mt-3">
+                          <button class="btn btn-sm btn-outline-primary" onclick="showDebugInfo()">
+                            <i class="bi bi-eye me-1"></i>View Data Details
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" onclick="clearAllData()">
+                            <i class="bi bi-trash me-1"></i>Clear All Data
+                          </button>
+                        </div>
+                      </div>
+                    `;
+                    return;
+                  }
+
+                  // Generate ROI Analysis
+                  if (analytics.byPlatform && Object.keys(analytics.byPlatform).length > 0) {
+                    generateMetricChart('ROI Analysis', 'roi', analytics, insights);
+                  }
+
+                  // Generate ROAS Analysis
+                  if (analytics.byPlatform && Object.keys(analytics.byPlatform).length > 0) {
+                    generateMetricChart('ROAS Analysis', 'roas', analytics, insights);
+                  }
+
+                  // Generate Platform Performance
+                  if (analytics.byPlatform && Object.keys(analytics.byPlatform).length > 0) {
+                    generateMetricChart('Platform Performance', 'platform', analytics, insights);
+                  }
+
+                  // Generate CTR Analysis
+                  if (analytics.byPlatform && Object.keys(analytics.byPlatform).length > 0) {
+                    generateMetricChart('CTR Analysis', 'ctr', analytics, insights);
+                  }
+
+                  // Generate CPC Analysis
+                  if (analytics.byPlatform && Object.keys(analytics.byPlatform).length > 0) {
+                    generateMetricChart('CPC Analysis', 'cpc', analytics, insights);
+                  }
+
+                  // Generate Conversion Analysis
+                  if (analytics.byPlatform && Object.keys(analytics.byPlatform).length > 0) {
+                    generateMetricChart('Conversion Analysis', 'conversion', analytics, insights);
+                  }
+
+                } catch (error) {
+                  console.error("Error generating charts:", error);
+                  insightsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                      <h6><i class="bi bi-exclamation-triangle me-2"></i>Error Generating Insights</h6>
+                      <p class="mb-0">There was an error generating the insights. Please try refreshing the page or contact support.</p>
+                      <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                          <i class="bi bi-arrow-clockwise me-1"></i>Refresh Page
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }
+              }
+
+              // Function to manually generate insights from existing data
+              async function generateInsightsFromExistingData() {
+                try {
+                  showSuccessMessage("Opening metric selection for existing data...");
+                  
+                  // Show the metric selection section
+                  showMetricSelectionForExistingData();
+                  
+                } catch (error) {
+                  console.error("Error opening metric selection:", error);
+                  showErrorMessage(`Error opening metric selection: ${error.message}`);
+                }
+              }
+
+              // Helper functions for messages
+              function showSuccessMessage(message) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+                alertDiv.innerHTML = `
+                  <strong>✅ Success!</strong><br>
+                  ${message}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(alertDiv);
+
+                setTimeout(() => {
+                  if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                  }
+                }, 5000);
+              }
+
+              function showErrorMessage(message) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+                alertDiv.innerHTML = `
+                  <strong>❌ Error!</strong><br>
+                  ${message}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(alertDiv);
+
+                setTimeout(() => {
+                  if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                  }
+                }, 5000);
+              }
 
               function showMetricSelection() {
                 document.getElementById("metricSelectionSection").style.display =
