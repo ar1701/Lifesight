@@ -63,40 +63,22 @@ const getLogin = (req, res) => {
 };
 
 const postLogin = (req, res, next) => {
-    console.log('Login attempt:', {
-        username: req.body.username,
-        hasSession: !!req.session,
-        sessionID: req.sessionID
-    });
-    
     passport.authenticate('local', (err, user, info) => {
         if (err) {
-            console.error('Authentication error:', err);
             return next(err);
         }
         
         if (!user) {
-            console.log('Authentication failed:', info);
             return res.redirect('/login');
         }
         
         req.logIn(user, (err) => {
             if (err) {
-                console.error('Login error:', err);
                 return next(err);
             }
             
-            console.log('User logged in successfully:', user.username);
-            
-            // Manually save session before redirect (important for Vercel)
-            req.session.save((err) => {
-                if (err) {
-                    console.error('Session save error:', err);
-                    return next(err);
-                }
-                console.log('Session saved, redirecting to /app');
-                return res.redirect('/app');
-            });
+            // Session will be automatically saved by MongoDB store
+            return res.redirect('/app');
         });
     })(req, res, next);
 };

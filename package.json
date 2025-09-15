@@ -7,7 +7,12 @@
     "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["marketing", "analytics", "dashboard", "ai"],
+  "keywords": [
+    "marketing",
+    "analytics",
+    "dashboard",
+    "ai"
+  ],
   "author": "SaleSight Team",
   "license": "ISC",
   "description": "AI-powered Marketing Intelligence Platform",
@@ -16,6 +21,7 @@
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.5.0",
     "chartjs-adapter-date-fns": "^3.0.0",
+    "connect-mongo": "^5.1.0",
     "csv-parser": "^3.2.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
