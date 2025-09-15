@@ -232,14 +232,37 @@
 
         // Generate table HTML
         function generateTable(data, showPagination = true) {
-          if (!data || !data.data) {
+          console.log("Dashboard-new generateTable called with:", data);
+          
+          if (!data) {
             return '<p class="text-gray-500">No data available</p>';
           }
 
-          const headers = data.data.headers || [];
-          const rows = data.data.rows || [];
+          let headers, rows;
 
-          if (headers.length === 0 || rows.length === 0) {
+          // Handle different data structures
+          if (data.data && data.data.headers && data.data.rows) {
+            headers = data.data.headers;
+            rows = data.data.rows;
+          } else if (data.headers && data.rows) {
+            headers = data.headers;
+            rows = data.rows;
+          } else if (Array.isArray(data) && data.length > 0) {
+            // Handle case where data is directly an array
+            if (Array.isArray(data[0])) {
+              headers = data[0];
+              rows = data.slice(1);
+            } else {
+              headers = Object.keys(data[0] || {});
+              rows = data;
+            }
+          } else {
+            console.error("Invalid table data structure:", data);
+            return '<p class="text-gray-500">Invalid table data structure</p>';
+          }
+
+          if (!headers || !rows || headers.length === 0 || rows.length === 0) {
+            console.error("No valid headers or rows found:", { headers, rows });
             return '<p class="text-gray-500">No data available</p>';
           }
 
@@ -256,8 +279,9 @@
           tableHtml += "<tbody>";
           rows.forEach((row) => {
             tableHtml += "<tr>";
-            row.forEach((cell) => {
-              tableHtml += `<td>${cell}</td>`;
+            const rowData = Array.isArray(row) ? row : headers.map((h) => row[h] || "");
+            rowData.forEach((cell) => {
+              tableHtml += `<td>${cell || ''}</td>`;
             });
             tableHtml += "</tr>";
           });
