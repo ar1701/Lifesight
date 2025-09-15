@@ -810,17 +810,34 @@
         }
 
         try {
+          console.log("Attempting to delete file:", fileId);
+
           const response = await fetch(`/app/file/${fileId}`, {
             method: "DELETE",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
           });
-          const result = await response.json();
 
-          if (response.ok) {
-            fileCard.remove();
-            showToast("File deleted successfully", "success");
-          } else {
-            throw new Error(result.error || "Failed to delete file");
+          console.log("Delete response status:", response.status);
+
+          if (!response.ok) {
+            const errorData = await response
+              .json()
+              .catch(() => ({ error: "Unknown error" }));
+            console.error("Delete error response:", errorData);
+            throw new Error(
+              errorData.error || `Server error: ${response.status}`
+            );
           }
+
+          const result = await response.json();
+          console.log("Delete success:", result);
+
+          fileCard.remove();
+          showToast("File deleted successfully", "success");
         } catch (error) {
           console.error("Error deleting file:", error);
           showToast(`Error deleting file: ${error.message}`, "error");

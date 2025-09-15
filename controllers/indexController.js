@@ -59,7 +59,8 @@ const uploadFile = (req, res) => {
   // Handle both disk storage (development) and memory storage (production)
   const fileData = {
     originalName: req.file.originalname,
-    storageName: req.file.filename || `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+    storageName:
+      req.file.filename || `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
     user: req.user.id,
     mimetype: req.file.mimetype,
   };
@@ -121,17 +122,20 @@ const previewFile = async (req, res) => {
       // Handle both disk storage and memory storage
       if (file.fileData) {
         // Memory storage (production)
-        const csvString = file.fileData.toString('utf8');
-        const lines = csvString.split('\n');
-        const headers = lines[0].split(',');
-        allData = lines.slice(1).map(line => {
-          const values = line.split(',');
-          const obj = {};
-          headers.forEach((header, index) => {
-            obj[header.trim()] = values[index] ? values[index].trim() : '';
-          });
-          return obj;
-        }).filter(row => Object.values(row).some(val => val !== ''));
+        const csvString = file.fileData.toString("utf8");
+        const lines = csvString.split("\n");
+        const headers = lines[0].split(",");
+        allData = lines
+          .slice(1)
+          .map((line) => {
+            const values = line.split(",");
+            const obj = {};
+            headers.forEach((header, index) => {
+              obj[header.trim()] = values[index] ? values[index].trim() : "";
+            });
+            return obj;
+          })
+          .filter((row) => Object.values(row).some((val) => val !== ""));
         processData();
       } else {
         // Disk storage (development)
@@ -191,7 +195,7 @@ const generateInsight = async (req, res) => {
       // Handle both disk storage and memory storage
       if (file.fileData) {
         // Memory storage (production)
-        fileContent = file.fileData.toString('utf8');
+        fileContent = file.fileData.toString("utf8");
       } else {
         // Disk storage (development)
         const filePath = path.join(__dirname, "..", file.filePath);
@@ -208,7 +212,7 @@ const generateInsight = async (req, res) => {
         const filePath = path.join(__dirname, "..", file.filePath);
         workbook = xlsx.readFile(filePath);
       }
-      
+
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
@@ -387,30 +391,70 @@ const generateInsight = async (req, res) => {
 
 const deleteFile = async (req, res) => {
   try {
+    console.log("Delete file request:", {
+      fileId: req.params.fileId,
+      userId: req.user?.id,
+      userExists: !!req.user,
+    });
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        error: "Authentication required to delete files.",
+      });
+    }
+
     const file = await File.findOne({
       _id: req.params.fileId,
       user: req.user.id,
     });
 
     if (!file) {
+      console.log("File not found:", req.params.fileId);
       return res.status(404).json({
         error: "File not found or you do not have permission to delete it.",
       });
     }
 
-    // Delete the physical file
-    const filePath = path.join(__dirname, "..", file.filePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    console.log("File found:", {
+      id: file._id,
+      originalName: file.originalName,
+      hasFilePath: !!file.filePath,
+      hasFileData: !!file.fileData,
+    });
+
+    // Delete the physical file only if it exists on disk (development)
+    if (file.filePath) {
+      try {
+        const fullPath = path.join(__dirname, "..", file.filePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+          console.log("Physical file deleted:", fullPath);
+        } else {
+          console.log("Physical file not found on disk:", fullPath);
+        }
+      } catch (unlinkError) {
+        console.warn(
+          "Warning: Could not delete physical file:",
+          unlinkError.message
+        );
+        // Continue with database deletion even if physical file deletion fails
+      }
     }
 
     // Delete from database
-    await File.findByIdAndDelete(req.params.fileId);
+    const deletedFile = await File.findByIdAndDelete(req.params.fileId);
+    console.log(
+      "File deleted from database:",
+      deletedFile ? "Success" : "Failed"
+    );
 
     res.json({ message: "File deleted successfully." });
   } catch (err) {
     console.error("Error deleting file:", err);
-    res.status(500).json({ error: "Failed to delete file." });
+    res.status(500).json({
+      error: "Failed to delete file.",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
   }
 };
 

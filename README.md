@@ -1,4 +1,5 @@
 # 📊 SaleSight - Marketing Intelligence Platform
+**Live Demo:** https://lifesight-five.vercel.app/
 
 A modern, AI-powered business intelligence platform that transforms your marketing data into actionable insights. Built for e-commerce businesses to understand how marketing activity connects with business outcomes.
 
