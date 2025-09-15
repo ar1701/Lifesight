@@ -21,4 +21,13 @@ router.get("/export", marketingController.exportData);
 // POST upload custom data
 router.post("/upload-custom", marketingController.uploadCustomData);
 
+// GET upload progress
+router.get("/upload-progress", marketingController.getUploadProgress);
+
+// GET debug data counts
+router.get("/debug-data", marketingController.getDataDebug);
+
+// DELETE clear marketing data (for testing)
+router.delete("/clear-data", marketingController.clearMarketingData);
+
 module.exports = router;

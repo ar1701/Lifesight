@@ -606,35 +606,118 @@ const uploadCustomData = async (req, res) => {
   ]);
 
   upload(req, res, async (err) => {
+    console.log("Upload middleware called");
+
     if (err) {
+      console.error("Multer error:", err);
       return res.status(400).json({ error: err.message });
     }
 
     try {
+      console.log("Processing upload request");
+      console.log("User:", req.user ? req.user.id : "No user");
+      console.log("Files:", req.files);
+
+      if (!req.user || !req.user.id) {
+        console.error("No authenticated user found");
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
       const userId = req.user.id;
       const campaignFiles = req.files["campaignFiles"] || [];
       const businessFiles = req.files["businessFile"] || [];
 
+      console.log(
+        `Campaign files: ${campaignFiles.length}, Business files: ${businessFiles.length}`
+      );
+
       if (campaignFiles.length === 0 && businessFiles.length === 0) {
+        console.log("No files uploaded");
         return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      // Validate file sizes (max 10MB per file)
+      const maxFileSize = 10 * 1024 * 1024; // 10MB
+      const allFiles = [...campaignFiles, ...businessFiles];
+      for (const file of allFiles) {
+        if (file.size > maxFileSize) {
+          return res.status(400).json({
+            error: `File ${file.originalname} is too large. Maximum size is 10MB.`,
+          });
+        }
+      }
+
+      // Limit total number of campaign files
+      if (campaignFiles.length > 5) {
+        return res.status(400).json({
+          error: "Too many campaign files. Maximum 5 files allowed at once.",
+        });
       }
 
       let processedCampaigns = 0;
       let processedBusinessMetrics = 0;
 
-      // Process campaign files
+      // Process campaign files sequentially for better memory management
+      console.log("Processing campaign files...");
       for (const file of campaignFiles) {
+        console.log(`Processing campaign file: ${file.originalname}`);
         const data = await parseFileData(file);
-        await processCampaignData(data, userId);
+        console.log(`Parsed ${data.length} rows from ${file.originalname}`);
+
+        // Process in smaller batches to prevent memory issues
+        const batchSize = 100;
+        const totalBatches = Math.ceil(data.length / batchSize);
+
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          const currentBatch = Math.floor(i / batchSize) + 1;
+
+          console.log(
+            `Processing batch ${currentBatch}/${totalBatches} (${batch.length} records)`
+          );
+
+          await processCampaignData(batch, userId);
+
+          // Store progress for frontend polling
+          const progress = Math.round((currentBatch / totalBatches) * 100);
+          const progressKey = `upload_progress_${userId}`;
+
+          // Store progress in a simple in-memory cache (you could use Redis for production)
+          global.uploadProgress = global.uploadProgress || {};
+          global.uploadProgress[progressKey] = {
+            progress,
+            fileName: file.originalname,
+            batch: currentBatch,
+            totalBatches,
+            message: `Processing ${file.originalname}...`,
+            details: `Batch ${currentBatch}/${totalBatches} (${progress}%)`,
+          };
+
+          console.log(
+            `Progress: ${progress}% complete for ${file.originalname}`
+          );
+        }
+
         processedCampaigns += data.length;
+        console.log(
+          `Successfully processed ${data.length} campaign records from ${file.originalname}`
+        );
       }
 
       // Process business files
+      console.log("Processing business files...");
       for (const file of businessFiles) {
+        console.log(`Processing business file: ${file.originalname}`);
         const data = await parseFileData(file);
+        console.log(`Parsed ${data.length} rows from ${file.originalname}`);
         await processBusinessData(data, userId);
         processedBusinessMetrics += data.length;
+        console.log(`Successfully processed ${data.length} business records`);
       }
+
+      console.log(
+        `Upload completed: ${processedCampaigns} campaigns, ${processedBusinessMetrics} business metrics`
+      );
 
       res.json({
         message: "Custom data uploaded successfully",
@@ -645,23 +728,43 @@ const uploadCustomData = async (req, res) => {
       });
     } catch (error) {
       console.error("Error uploading custom data:", error);
-      res
-        .status(500)
-        .json({ error: "Failed to upload custom data: " + error.message });
+      console.error("Error stack:", error.stack);
+
+      // Ensure we always send a JSON response
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: "Failed to upload custom data: " + error.message,
+          details: error.stack,
+        });
+      }
     }
   });
 };
 
 // Helper function to parse file data
 async function parseFileData(file) {
-  const fileExt = path.extname(file.originalname).toLowerCase();
+  try {
+    console.log(
+      `Parsing file: ${file.originalname}, size: ${file.buffer.length} bytes`
+    );
+    const fileExt = path.extname(file.originalname).toLowerCase();
 
-  if (fileExt === ".csv") {
-    return parseCSVFromBuffer(file.buffer);
-  } else if (fileExt === ".xlsx" || fileExt === ".xls") {
-    return parseExcelFromBuffer(file.buffer);
-  } else {
-    throw new Error("Unsupported file format");
+    if (fileExt === ".csv") {
+      const result = await parseCSVFromBuffer(file.buffer);
+      console.log(`CSV parsed successfully: ${result.length} rows`);
+      return result;
+    } else if (fileExt === ".xlsx" || fileExt === ".xls") {
+      const result = await parseExcelFromBuffer(file.buffer);
+      console.log(`Excel parsed successfully: ${result.length} rows`);
+      return result;
+    } else {
+      throw new Error(`Unsupported file format: ${fileExt}`);
+    }
+  } catch (error) {
+    console.error(`Error parsing file ${file.originalname}:`, error);
+    throw new Error(
+      `Failed to parse file ${file.originalname}: ${error.message}`
+    );
   }
 }
 
@@ -707,19 +810,24 @@ function parseExcelFromBuffer(buffer) {
 
 // Process campaign data
 async function processCampaignData(data, userId) {
-  const requiredFields = [
-    "campaign_name",
-    "platform",
-    "date",
-    "spend",
-    "impressions",
-    "clicks",
-    "attributed_revenue",
-  ];
-
   for (const row of data) {
+    // Normalize column names to handle different formats
+    const normalizedRow = normalizeColumnNames(row);
+
+    const requiredFields = [
+      "campaign_name",
+      "platform",
+      "date",
+      "spend",
+      "impressions",
+      "clicks",
+      "attributed_revenue",
+    ];
+
     // Validate required fields
-    const missingFields = requiredFields.filter((field) => !row[field]);
+    const missingFields = requiredFields.filter(
+      (field) => !normalizedRow[field]
+    );
     if (missingFields.length > 0) {
       throw new Error(
         `Missing required fields in campaign data: ${missingFields.join(", ")}`
@@ -728,43 +836,126 @@ async function processCampaignData(data, userId) {
 
     // Validate platform
     const validPlatforms = ["Facebook", "Google", "TikTok"];
-    if (!validPlatforms.includes(row.platform)) {
+    if (!validPlatforms.includes(normalizedRow.platform)) {
       throw new Error(
         `Invalid platform: ${
-          row.platform
+          normalizedRow.platform
         }. Must be one of: ${validPlatforms.join(", ")}`
       );
     }
 
     // Create campaign record
-    const campaign = new MarketingCampaign({
+    const campaignData = {
       user: userId,
-      campaign_name: row.campaign_name,
-      platform: row.platform,
-      date: new Date(row.date),
-      spend: parseFloat(row.spend) || 0,
-      impressions: parseInt(row.impressions) || 0,
-      clicks: parseInt(row.clicks) || 0,
-      attributed_revenue: parseFloat(row.attributed_revenue) || 0,
-    });
+      campaign: normalizedRow.campaign_name, // Schema expects 'campaign'
+      platform: normalizedRow.platform,
+      tactic: normalizedRow.tactic || "Unknown", // Preserve tactic from original data
+      state: normalizedRow.state || "Unknown", // Preserve state from original data
+      date: new Date(normalizedRow.date),
+      spend: parseFloat(normalizedRow.spend) || 0,
+      impressions: parseInt(normalizedRow.impressions) || 0,
+      clicks: parseInt(normalizedRow.clicks) || 0,
+      attributedRevenue: parseFloat(normalizedRow.attributed_revenue) || 0, // Schema expects 'attributedRevenue'
+    };
 
+    const campaign = new MarketingCampaign(campaignData);
     await campaign.save();
   }
 }
 
+// Helper function to normalize column names for different data formats
+function normalizeColumnNames(row) {
+  const normalized = {};
+
+  // Create a mapping of possible column names to standard names
+  const columnMappings = {
+    // Campaign name variations
+    campaign_name: "campaign_name",
+    campaign: "campaign_name",
+    "Campaign Name": "campaign_name",
+    Campaign: "campaign_name",
+
+    // Date variations
+    date: "date",
+    Date: "date",
+
+    // Spend variations
+    spend: "spend",
+    Spend: "spend",
+    cost: "spend",
+    Cost: "spend",
+
+    // Impressions variations
+    impressions: "impressions",
+    Impressions: "impressions",
+    impression: "impressions", // Uses 'impression' (singular)
+    Impression: "impressions",
+
+    // Clicks variations
+    clicks: "clicks",
+    Clicks: "clicks",
+    click: "clicks",
+    Click: "clicks",
+
+    // Revenue variations
+    attributed_revenue: "attributed_revenue",
+    "attributed revenue": "attributed_revenue", // Uses space
+    "Attributed Revenue": "attributed_revenue",
+    revenue: "attributed_revenue",
+    Revenue: "attributed_revenue",
+
+    // Platform variations (standard cases)
+    platform: "platform",
+    Platform: "platform",
+
+    // Preserve original fields for schema compatibility
+    tactic: "tactic",
+    Tactic: "tactic",
+    state: "state",
+    State: "state",
+  };
+
+  // Map each field in the row to normalized names
+  for (const [originalKey, value] of Object.entries(row)) {
+    const normalizedKey =
+      columnMappings[originalKey] || originalKey.toLowerCase();
+    normalized[normalizedKey] = value;
+  }
+
+  // Extract platform from campaign name for the assessment data format
+  if (normalized.campaign_name && !normalized.platform) {
+    const campaignName = normalized.campaign_name.toLowerCase();
+
+    if (campaignName.includes("facebook")) {
+      normalized.platform = "Facebook";
+    } else if (campaignName.includes("google")) {
+      normalized.platform = "Google";
+    } else if (campaignName.includes("tiktok")) {
+      normalized.platform = "TikTok";
+    }
+  }
+
+  return normalized;
+}
+
 // Process business data
 async function processBusinessData(data, userId) {
-  const requiredFields = [
-    "date",
-    "total_revenue",
-    "total_orders",
-    "new_customers",
-    "cogs",
-  ];
-
   for (const row of data) {
+    // Normalize column names for business data
+    const normalizedRow = normalizeBusinessColumnNames(row);
+
+    const requiredFields = [
+      "date",
+      "total_revenue",
+      "total_orders",
+      "new_customers",
+      "cogs",
+    ];
+
     // Validate required fields
-    const missingFields = requiredFields.filter((field) => !row[field]);
+    const missingFields = requiredFields.filter(
+      (field) => !normalizedRow[field]
+    );
     if (missingFields.length > 0) {
       throw new Error(
         `Missing required fields in business data: ${missingFields.join(", ")}`
@@ -774,16 +965,131 @@ async function processBusinessData(data, userId) {
     // Create business metrics record
     const businessMetric = new BusinessMetrics({
       user: userId,
-      date: new Date(row.date),
-      total_revenue: parseFloat(row.total_revenue) || 0,
-      total_orders: parseInt(row.total_orders) || 0,
-      new_customers: parseInt(row.new_customers) || 0,
-      cogs: parseFloat(row.cogs) || 0,
+      date: new Date(normalizedRow.date),
+      total_revenue: parseFloat(normalizedRow.total_revenue) || 0,
+      total_orders: parseInt(normalizedRow.total_orders) || 0,
+      new_customers: parseInt(normalizedRow.new_customers) || 0,
+      cogs: parseFloat(normalizedRow.cogs) || 0,
     });
 
     await businessMetric.save();
   }
 }
+
+// Helper function to normalize business data column names
+function normalizeBusinessColumnNames(row) {
+  const normalized = {};
+
+  // Create a mapping for business data columns
+  const columnMappings = {
+    // Date variations
+    date: "date",
+    Date: "date",
+
+    // Revenue variations
+    total_revenue: "total_revenue",
+    "total revenue": "total_revenue",
+    "Total Revenue": "total_revenue",
+    revenue: "total_revenue",
+    Revenue: "total_revenue",
+
+    // Orders variations
+    total_orders: "total_orders",
+    "total orders": "total_orders",
+    "Total Orders": "total_orders",
+    "# of orders": "total_orders", // Assessment data format
+    orders: "total_orders",
+    Orders: "total_orders",
+
+    // New customers variations
+    new_customers: "new_customers",
+    "new customers": "new_customers",
+    "New Customers": "new_customers",
+    "new customers": "new_customers",
+
+    // COGS variations
+    cogs: "cogs",
+    COGS: "cogs",
+    "cost of goods sold": "cogs",
+    "Cost of Goods Sold": "cogs",
+  };
+
+  // Map each field in the row to normalized names
+  for (const [originalKey, value] of Object.entries(row)) {
+    const normalizedKey =
+      columnMappings[originalKey] ||
+      originalKey.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    normalized[normalizedKey] = value;
+  }
+
+  return normalized;
+}
+
+// Get upload progress
+const getUploadProgress = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const progressKey = `upload_progress_${userId}`;
+
+    const progress = global.uploadProgress?.[progressKey] || {
+      progress: 0,
+      message: "No upload in progress",
+      details: "",
+    };
+
+    res.json(progress);
+  } catch (err) {
+    console.error("Error getting progress:", err);
+    res.status(500).json({ error: "Failed to get progress" });
+  }
+};
+
+// Debug: Get raw data counts by platform
+const getDataDebug = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const campaignCounts = await MarketingCampaign.aggregate([
+      { $match: { user: userId } },
+      { $group: { _id: "$platform", count: { $sum: 1 } } },
+    ]);
+
+    const businessCount = await BusinessMetrics.countDocuments({
+      user: userId,
+    });
+
+    res.json({
+      userId,
+      campaignsByPlatform: campaignCounts,
+      businessMetrics: businessCount,
+      totalCampaigns: await MarketingCampaign.countDocuments({ user: userId }),
+    });
+  } catch (err) {
+    console.error("Error getting debug data:", err);
+    res.status(500).json({ error: "Failed to get debug data" });
+  }
+};
+
+// Clear user's marketing data (for testing)
+const clearMarketingData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const campaignResult = await MarketingCampaign.deleteMany({ user: userId });
+    const businessResult = await BusinessMetrics.deleteMany({ user: userId });
+
+    res.json({
+      message: "Data cleared successfully",
+      deleted: {
+        campaigns: campaignResult.deletedCount,
+        businessMetrics: businessResult.deletedCount,
+      },
+    });
+  } catch (err) {
+    console.error("Error clearing data:", err);
+    res.status(500).json({ error: "Failed to clear data" });
+  }
+};
 
 module.exports = {
   importMarketingData,
@@ -791,4 +1097,7 @@ module.exports = {
   getMarketingInsights,
   exportData,
   uploadCustomData,
+  getUploadProgress,
+  getDataDebug,
+  clearMarketingData,
 };

@@ -396,11 +396,11 @@ const getDashboardPage = async (req, res) => {
       user: req.user.id,
     }).sort({ createdAt: -1 });
 
-      res.render("dashboard-new", {
-        title: `${dashboard.name} - SaleSight`,
-        dashboard,
-        widgets,
-      });
+    res.render("dashboard-new", {
+      title: `${dashboard.name} - SaleSight`,
+      dashboard,
+      widgets,
+    });
   } catch (err) {
     console.error("Error loading dashboard page:", err);
     res.status(500).render("error", {
@@ -412,8 +412,9 @@ const getDashboardPage = async (req, res) => {
 
 const getMarketingDashboard = async (req, res) => {
   try {
-    res.render("marketing-dashboard-new", {
+    res.render("marketing-dashboard-restructured", {
       title: "Marketing Intelligence - SaleSight",
+      user: req.user || null,
     });
   } catch (err) {
     console.error("Error loading marketing dashboard:", err);

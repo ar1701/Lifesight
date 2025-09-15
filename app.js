@@ -72,7 +72,21 @@ app.use((req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error("Unhandled error:", err.stack);
+
+  // Check if this is an API request
+  if (
+    req.path.startsWith("/api/") ||
+    req.headers.accept?.includes("application/json")
+  ) {
+    return res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
+  }
+
+  // For regular page requests, send HTML
   res.status(500).send("Something broke!");
 });
 
