@@ -1284,6 +1284,86 @@ const clearMarketingData = async (req, res) => {
   }
 };
 
+// Gemini Chat endpoint
+const geminiChat = async (req, res) => {
+  try {
+    const { message, analytics } = req.body;
+    const userId = req.user.id;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Get current analytics data if not provided
+    let currentAnalytics = analytics;
+    if (!currentAnalytics) {
+      const campaigns = await MarketingCampaign.find({ user: userId });
+      const businessMetrics = await BusinessMetrics.find({ user: userId });
+      currentAnalytics = await calculateMarketingAnalytics(campaigns, businessMetrics);
+    }
+
+    // Prepare context for Gemini
+    const context = {
+      userMessage: message,
+      analytics: currentAnalytics,
+      dataSummary: {
+        totalCampaigns: currentAnalytics.totalCampaigns || 0,
+        totalSpend: currentAnalytics.totalSpend || 0,
+        totalRevenue: currentAnalytics.totalRevenue || 0,
+        platforms: Object.keys(currentAnalytics.byPlatform || {}),
+        dateRange: currentAnalytics.dateRange || {}
+      }
+    };
+
+    // Use Gemini to generate response
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `
+You are a marketing analytics AI assistant. The user has uploaded marketing data and is asking questions about it.
+
+User Question: "${message}"
+
+Available Data:
+- Total Campaigns: ${context.dataSummary.totalCampaigns}
+- Total Spend: $${context.dataSummary.totalSpend?.toLocaleString() || 0}
+- Total Revenue: $${context.dataSummary.totalRevenue?.toLocaleString() || 0}
+- Platforms: ${context.dataSummary.platforms.join(', ') || 'None'}
+- Date Range: ${context.dataSummary.dateRange.start || 'N/A'} to ${context.dataSummary.dateRange.end || 'N/A'}
+
+Analytics Data: ${JSON.stringify(currentAnalytics, null, 2)}
+
+Instructions:
+1. Answer the user's question based on the available data
+2. Provide specific insights and recommendations
+3. If data is missing, suggest what data to upload
+4. Keep responses conversational and helpful
+5. Include relevant metrics and numbers when available
+6. If the question is about trends, analyze the data patterns
+7. If asking about performance, compare platforms/campaigns
+
+Respond in a helpful, conversational tone. Be specific with numbers and insights.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({
+      success: true,
+      response: text
+    });
+
+  } catch (err) {
+    console.error("Error in Gemini chat:", err);
+    res.status(500).json({ 
+      error: "Failed to process chat message",
+      response: "I'm sorry, I encountered an error. Please try again or check if you have uploaded data first."
+    });
+  }
+};
+
 module.exports = {
   importMarketingData,
   getMarketingAnalytics,
@@ -1293,4 +1373,5 @@ module.exports = {
   getUploadProgress,
   getDataDebug,
   clearMarketingData,
+  geminiChat,
 };

@@ -30,4 +30,7 @@ router.get("/debug-data", marketingController.getDataDebug);
 // DELETE clear marketing data (for testing)
 router.delete("/clear-data", marketingController.clearMarketingData);
 
+// POST Gemini chat
+router.post("/gemini-chat", marketingController.geminiChat);
+
 module.exports = router;
