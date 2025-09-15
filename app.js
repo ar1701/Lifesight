@@ -5,6 +5,8 @@ const path = require("path");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const passport = require("passport");
+const cookieParser = require("cookie-parser");
+const { authenticateJWT } = require("./config/jwt");
 
 // Passport Config
 require("./config/passport")(passport);
@@ -25,6 +27,7 @@ app.set("view engine", "ejs");
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
 
 // Express session with MongoDB store
 app.use(
@@ -50,6 +53,19 @@ app.use(
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+// JWT authentication middleware for all routes
+app.use(function (req, res, next) {
+  const token = req.cookies?.authToken;
+  if (token) {
+    const { verifyToken } = require('./config/jwt');
+    const decoded = verifyToken(token);
+    if (decoded) {
+      req.user = decoded;
+    }
+  }
+  next();
+});
 
 // Global variables for user
 app.use(function (req, res, next) {
@@ -83,7 +99,7 @@ app.use("/api/dashboards", dashboardRouter);
 app.use("/api/marketing", marketingRouter);
 
 app.get("/", (req, res) => {
-  if (req.isAuthenticated()) {
+  if (req.user) {
     res.redirect("/app");
   } else {
     res.redirect("/login");
