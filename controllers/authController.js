@@ -63,8 +63,14 @@ const getLogin = (req, res) => {
 };
 
 const postLogin = (req, res, next) => {
+    console.log('Login attempt:', {
+        username: req.body.username,
+        hasSession: !!req.session,
+        sessionID: req.sessionID
+    });
+    
     passport.authenticate('local', {
-        successRedirect: '/',
+        successRedirect: '/app',
         failureRedirect: '/login',
         // failureFlash: true // Optional: if you add connect-flash
     })(req, res, next);

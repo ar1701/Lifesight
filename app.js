@@ -51,9 +51,9 @@ app.use(function (req, res, next) {
   next();
 });
 
-// Session health check middleware for API routes
-app.use("/api", function (req, res, next) {
-  // Ensure session is properly maintained for API calls
+// Session health check middleware for API routes only
+app.use("/api/marketing", function (req, res, next) {
+  // Ensure session is properly maintained for marketing API calls
   if (!req.session) {
     return res.status(401).json({
       error: "Session expired",
