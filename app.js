@@ -29,8 +29,15 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    },
+    name: "salesight.session", // Custom session name
   })
 );
 
@@ -41,6 +48,18 @@ app.use(passport.session());
 // Global variables for user
 app.use(function (req, res, next) {
   res.locals.user = req.user || null;
+  next();
+});
+
+// Session health check middleware for API routes
+app.use("/api", function (req, res, next) {
+  // Ensure session is properly maintained for API calls
+  if (!req.session) {
+    return res.status(401).json({
+      error: "Session expired",
+      message: "Please log in again",
+    });
+  }
   next();
 });
 
@@ -87,10 +106,10 @@ app.use((err, req, res, next) => {
   }
 
   // For regular page requests, send a proper error page
-  res.status(500).render('error', {
-    title: 'Error',
-    message: 'Something went wrong. Please try again.',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+  res.status(500).render("error", {
+    title: "Error",
+    message: "Something went wrong. Please try again.",
+    error: process.env.NODE_ENV === "development" ? err : {},
   });
 });
 

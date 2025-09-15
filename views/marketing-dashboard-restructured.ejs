@@ -1233,17 +1233,17 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
                 try {
                   // Show the uploaded data section with existing data
                   await showExistingDataSection();
-                  
+
                   // Show the metric selection section (Step 2)
                   showMetricSelectionForExistingData();
-                  
+
                   // Show success message
                   showSuccessMessage("Existing data loaded! You can now select metrics and generate insights.");
-                  
+
                 } catch (error) {
                   console.error("Error loading existing data:", error);
                   showErrorMessage(`Error loading existing data: ${error.message}. Please try refreshing the page.`);
-                  
+
                   // Still show the data section even if insights fail
                   try {
                     await showExistingDataSection();
@@ -1258,16 +1258,16 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
                 const metricSelectionSection = document.getElementById("metricSelectionSection");
                 if (metricSelectionSection) {
                   metricSelectionSection.style.display = "block";
-                  
+
                   // Enable the generate insights button
                   const generateBtn = document.getElementById("generateSelectedInsights");
                   if (generateBtn) {
                     generateBtn.disabled = false;
                   }
-                  
+
                   // Scroll to the metric selection section
                   metricSelectionSection.scrollIntoView({ behavior: "smooth" });
-                  
+
                   // Add a note that data is already loaded
                   const existingDataNote = document.createElement('div');
                   existingDataNote.className = 'alert alert-success mb-3';
@@ -1435,10 +1435,10 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
               async function generateInsightsFromExistingData() {
                 try {
                   showSuccessMessage("Opening metric selection for existing data...");
-                  
+
                   // Show the metric selection section
                   showMetricSelectionForExistingData();
-                  
+
                 } catch (error) {
                   console.error("Error opening metric selection:", error);
                   showErrorMessage(`Error opening metric selection: ${error.message}`);
@@ -1756,8 +1756,19 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
                 try {
                   const response = await fetch("/api/marketing/insights", {
                     method: "GET",
-                    headers: { "Accept": "application/json" },
+                    headers: {
+                      "Accept": "application/json",
+                      "Content-Type": "application/json"
+                    },
+                    credentials: 'include' // Include cookies for authentication
                   });
+
+                  // Check if response is JSON
+                  const contentType = response.headers.get("content-type");
+                  if (!contentType || !contentType.includes("application/json")) {
+                    console.error("Response is not JSON:", contentType);
+                    throw new Error("Server returned non-JSON response");
+                  }
 
                   const result = await response.json();
 
@@ -1780,6 +1791,7 @@ Brand Awareness,TikTok,2024-01-03,800,40000,1600,3200</code></pre>
                     `;
                   }
                 } catch (error) {
+                  console.error("Error generating insights:", error);
                   insightsElement.innerHTML = `
                     <div class="text-muted">
                       <small>Unable to generate insights</small>

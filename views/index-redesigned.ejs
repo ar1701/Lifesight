@@ -852,12 +852,21 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Accept: "application/json",
             },
+            credentials: "include", // Include cookies for authentication
             body: JSON.stringify({
               prompt: message,
               fileId: selectedFileId,
             }),
           });
+
+          // Check if response is JSON
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            console.error("Response is not JSON:", contentType);
+            throw new Error("Server returned non-JSON response");
+          }
 
           const result = await response.json();
           document.getElementById(loadingId).remove();

@@ -386,9 +386,22 @@ const getMarketingInsights = async (req, res) => {
       }
     }
 
+    const campaigns = await MarketingCampaign.find({ user: userId });
+    const businessMetrics = await BusinessMetrics.find({ user: userId });
+
+    // Check if we have any data
+    if (campaigns.length === 0 && businessMetrics.length === 0) {
+      return res.json({
+        insights: [
+          "No data available for analysis. Please upload some data first.",
+        ],
+        analytics: {},
+      });
+    }
+
     const analytics = await calculateMarketingAnalytics(
-      await MarketingCampaign.find({ user: userId }),
-      await BusinessMetrics.find({ user: userId })
+      campaigns,
+      businessMetrics
     );
 
     // Generate insights based on the analytics
@@ -405,7 +418,14 @@ const getMarketingInsights = async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("Error getting marketing insights:", err);
-    res.status(500).json({ error: "Failed to get marketing insights." });
+    res.status(500).json({
+      error: "Failed to get marketing insights.",
+      message: err.message,
+      insights: [
+        "Unable to generate insights at this time. Please try again later.",
+      ],
+      analytics: {},
+    });
   }
 };
 
@@ -965,7 +985,10 @@ async function processCampaignDataBulk(data, userId) {
   }
 
   if (errors.length > 0) {
-    console.warn(`Encountered ${errors.length} errors during processing:`, errors.slice(0, 5));
+    console.warn(
+      `Encountered ${errors.length} errors during processing:`,
+      errors.slice(0, 5)
+    );
   }
 }
 
@@ -1135,7 +1158,10 @@ async function processBusinessDataBulk(data, userId) {
   }
 
   if (errors.length > 0) {
-    console.warn(`Encountered ${errors.length} errors during business data processing:`, errors.slice(0, 5));
+    console.warn(
+      `Encountered ${errors.length} errors during business data processing:`,
+      errors.slice(0, 5)
+    );
   }
 }
 
